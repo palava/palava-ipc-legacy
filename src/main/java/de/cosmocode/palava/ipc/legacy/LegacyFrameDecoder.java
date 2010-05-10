@@ -98,7 +98,6 @@ final class LegacyFrameDecoder extends FrameDecoder {
     protected Header decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
     /* CHECKSTYLE:ON */
         if (buffer.readable()) {
-            
             for (int i = buffer.readerIndex(); i < buffer.writerIndex(); i++) {
                 final byte c = buffer.getByte(i);
                 if (part == null) part = Part.TYPE;
@@ -178,11 +177,9 @@ final class LegacyFrameDecoder extends FrameDecoder {
                     }
                 }
             }
-            
-            return null;
-        } else {
-            return null;
         }
+        
+        return null;
     }
     
     private String readAndIncrement(ChannelBuffer buffer, int currentIndex) {

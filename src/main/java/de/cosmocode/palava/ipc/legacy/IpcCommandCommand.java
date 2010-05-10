@@ -57,8 +57,4 @@ final class IpcCommandCommand implements Command {
         return new JsonContent(result);
     }
     
-    Class<?> getConcreteClass() {
-        return ipcCommand.getClass();
-    }
-    
 }
