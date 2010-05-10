@@ -28,6 +28,9 @@ import org.jboss.netty.handler.codec.frame.FrameDecoder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 
+import de.cosmocode.palava.bridge.Header;
+import de.cosmocode.palava.bridge.call.CallType;
+
 /**
  * Decodes framed chunks of the legacy palava protocol which looks like:<br />
  * {@code <type>://<aliasedName>/<sessionId>/(<contentLength>)?<content>}.
@@ -92,7 +95,7 @@ final class LegacyFrameDecoder extends FrameDecoder {
     // Reducing cyclomatic complexity would dramatically reduce readability
     /* CHECKSTYLE:OFF */
     @Override
-    protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
+    protected Header decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
     /* CHECKSTYLE:ON */
         if (buffer.readable()) {
             
@@ -214,7 +217,7 @@ final class LegacyFrameDecoder extends FrameDecoder {
         }
         
         @Override
-        public int getLength() {
+        public int getContentLength() {
             return length;
         }
         
