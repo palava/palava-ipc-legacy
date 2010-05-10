@@ -36,7 +36,7 @@ import de.cosmocode.patterns.Adapter;
  * @author Willi Schoenborn
  */
 @Adapter(Command.class)
-public class IpcCommandCommand implements Command {
+final class IpcCommandCommand implements Command {
     
     private final IpcCommand ipcCommand;
 
