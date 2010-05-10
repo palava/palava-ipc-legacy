@@ -24,6 +24,7 @@ import com.google.inject.Binder;
 import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
+import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 
 /**
@@ -36,7 +37,11 @@ public final class LegacyNettyModule implements Module {
 
     @Override
     public void configure(Binder binder) {
-        binder.bind(LegacyFrameDecoder.class).in(Singleton.class);
+        // frame decoders are stateful
+        binder.bind(LegacyFrameDecoder.class).in(Scopes.NO_SCOPE);
+        binder.bind(LegacyDecoder.class).in(Singleton.class);
+        binder.bind(LegacyEncoder.class).in(Singleton.class);
+        binder.bind(LegacyHandler.class).in(Singleton.class);
     }
     
     /**
@@ -44,12 +49,20 @@ public final class LegacyNettyModule implements Module {
      * 
      * @since 1.0
      * @param frameDecoder the frame decoder which decodes chunks into {@link Header}s
-     * @param callDecoder the decoder 
+     * @param decoder the decoder
+     * @param encoder the encoder
+     * @param handler the handler
      * @return a new {@link ChannelPipeline}
      */
     @Provides
-    ChannelPipeline provideChannelPipeline(LegacyFrameDecoder frameDecoder, LegacyCallDecoder callDecoder) {
-        return Channels.pipeline(frameDecoder, callDecoder);
+    ChannelPipeline provideChannelPipeline(LegacyFrameDecoder frameDecoder, LegacyDecoder decoder, 
+        LegacyEncoder encoder, LegacyHandler handler) {
+        return Channels.pipeline(
+            frameDecoder,
+            decoder,
+            encoder,
+            handler
+        );
     }
     
     /**

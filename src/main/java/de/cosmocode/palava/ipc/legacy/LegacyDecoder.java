@@ -25,7 +25,7 @@ import java.util.Set;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelHandler.Sharable;
-import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
+import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -61,10 +61,10 @@ import de.cosmocode.patterns.ThreadSafe;
  */
 @Sharable
 @ThreadSafe
-final class LegacyCallDecoder extends OneToOneEncoder {
+final class LegacyDecoder extends OneToOneDecoder {
 
     @Override
-    protected Call encode(ChannelHandlerContext context, Channel channel, Object message) throws Exception {
+    protected Object decode(ChannelHandlerContext context, Channel channel, Object message) throws Exception {
         if (message instanceof Header) {
             final Header header = Header.class.cast(message);
             switch (header.getCallType()) {
@@ -91,7 +91,7 @@ final class LegacyCallDecoder extends OneToOneEncoder {
                 }
             }
         } else {
-            return null;
+            return message;
         }
     }
     

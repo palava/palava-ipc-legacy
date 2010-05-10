@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
+import com.google.gag.annotation.disclaimer.LegacySucks;
 
 import de.cosmocode.palava.bridge.Content;
 import de.cosmocode.palava.bridge.Server;
@@ -37,6 +38,8 @@ import de.cosmocode.patterns.Adapter;
  *
  * @author Willi Schoenborn
  */
+@SuppressWarnings("deprecation")
+@LegacySucks
 @Adapter(Command.class)
 final class JobCommand implements Command {
     
@@ -57,12 +60,10 @@ final class JobCommand implements Command {
         final Response response = new DummyResponse();
         final HttpRequest request = call.getHttpRequest();
         LOG.debug("Local request: {}", request);
-        // TODO needed????
         final HttpSession session = request == null ? null : request.getHttpSession();
         LOG.debug("Local session: {}", session);
 
         try {
-            // TODO keep looking for NPEs (caddy shouldn't be used anymore
             job.process(call, response, session, server, null);
         /*CHECKSTYLE:OFF*/
         } catch (RuntimeException e) {
