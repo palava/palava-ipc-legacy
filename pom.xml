@@ -38,6 +38,11 @@
       <version>1.3.9</version>
     </dependency>
     <dependency>
+      <groupId>com.google.gag</groupId>
+      <artifactId>gag</artifactId>
+      <version>1.0.1</version>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>

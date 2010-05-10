@@ -16,41 +16,32 @@
 
 package de.cosmocode.palava.ipc.legacy;
 
-import de.cosmocode.palava.bridge.call.Call;
 import de.cosmocode.palava.bridge.request.HttpRequest;
-import de.cosmocode.palava.ipc.IpcCall;
-import de.cosmocode.palava.ipc.IpcConnection;
+import de.cosmocode.palava.bridge.session.HttpSession;
 
 /**
- * An extension to the {@link IpcCall} interface which allows
- * attaching detached call instances to a connection.
+ * Extension of the {@link HttpRequest} interface
+ * which allows late attaching to a session.
  *
  * @since 
  * @author Willi Schoenborn
  */
-interface DetachedCall extends Call {
+public interface DetachedHttpRequest extends HttpRequest {
 
     /**
-     * Attaches this call to the specified connection.
+     * Attaches this request to the specified session.
      * 
      * @since 1.0
-     * @param request the surrounding connection
-     * @throws NullPointerException if request is null
+     * @param session the session
+     * @throws NullPointerException if session is null
      */
-    void attachTo(HttpRequest request);
+    void attachTo(HttpSession session);
     
     /**
      * {@inheritDoc}
-     * @throws IllegalStateException if this call is not yet attached to a connection
+     * @throws IllegalStateException if this request is not yet attached to a session
      */
     @Override
-    IpcConnection getConnection();
-
-    /**
-     * {@inheritDoc}
-     * @throws IllegalStateException if this call is not yet attached to a request
-     */
-    @Override
-    HttpRequest getHttpRequest();
+    HttpSession getHttpSession();
     
 }

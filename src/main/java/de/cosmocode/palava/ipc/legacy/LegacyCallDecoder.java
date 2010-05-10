@@ -24,6 +24,7 @@ import java.util.Set;
 
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelHandler.Sharable;
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -50,6 +51,7 @@ import de.cosmocode.palava.bridge.request.HttpRequest;
 import de.cosmocode.palava.ipc.IpcCall;
 import de.cosmocode.palava.ipc.IpcConnection;
 import de.cosmocode.palava.scope.AbstractScopeContext;
+import de.cosmocode.patterns.ThreadSafe;
 
 /**
  * A decoder which decodes {@link Header}s into {@link IpcCall}s.
@@ -57,13 +59,18 @@ import de.cosmocode.palava.scope.AbstractScopeContext;
  * @since 1.0
  * @author Willi Schoenborn
  */
+@Sharable
+@ThreadSafe
 final class LegacyCallDecoder extends OneToOneEncoder {
 
     @Override
-    protected DetachedCall encode(ChannelHandlerContext context, Channel channel, Object message) throws Exception {
+    protected Call encode(ChannelHandlerContext context, Channel channel, Object message) throws Exception {
         if (message instanceof Header) {
             final Header header = Header.class.cast(message);
             switch (header.getCallType()) {
+                case OPEN: {
+                    return new OpenCall(header);
+                }
                 case DATA: {
                     return new InternalDataCall(header);
                 }
@@ -75,6 +82,9 @@ final class LegacyCallDecoder extends OneToOneEncoder {
                 }
                 case BINARY: {
                     return new InternalBinaryCall(header);
+                }
+                case CLOSE: {
+                    return new CloseCall(header);
                 }
                 default: {
                     throw new UnsupportedOperationException("Unknown type " + header.getCallType());
@@ -93,9 +103,9 @@ final class LegacyCallDecoder extends OneToOneEncoder {
      */
     private abstract static class AbstractCall extends AbstractScopeContext implements DetachedCall {
         
-        private final Map<Object, Object> context = Maps.newHashMap();
+        private final Header header;
         
-        private final Header header; 
+        private Map<Object, Object> context;
         
         private HttpRequest request;
         
@@ -110,6 +120,9 @@ final class LegacyCallDecoder extends OneToOneEncoder {
         
         @Override
         protected Map<Object, Object> context() {
+            if (context == null) {
+                context = Maps.newHashMap();
+            }
             return context;
         }
         
@@ -141,6 +154,28 @@ final class LegacyCallDecoder extends OneToOneEncoder {
         @Override
         public InputStream getInputStream() {
             return ByteBuffers.asInputStream(getHeader().getContent());
+        }
+        
+    }
+    
+    /**
+     * Internal implementation of the call interface which is used to open a connection.
+     *
+     * @since 1.0
+     * @author Willi Schoenborn
+     */
+    private static final class OpenCall extends AbstractCall implements Call {
+        
+        private final JsonCall call;
+        
+        private OpenCall(Header header) {
+            super(header);
+            this.call = new InternalJsonCall(header);
+        }
+        
+        @Override
+        public Arguments getArguments() {
+            return call.getArguments();
         }
         
     }
@@ -307,6 +342,20 @@ final class LegacyCallDecoder extends OneToOneEncoder {
             super(header);
         }
 
+    }
+    
+    /**
+     * Internal implementation of the call interface which is used to close a connection.
+     *
+     * @since 1.0
+     * @author Willi Schoenborn
+     */
+    private static final class CloseCall extends AbstractCall implements Call {
+        
+        private CloseCall(Header header) {
+            super(header);
+        }
+        
     }
 
 }
