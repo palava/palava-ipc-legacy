@@ -46,7 +46,6 @@ import de.cosmocode.palava.bridge.Content;
 import de.cosmocode.palava.bridge.call.Arguments;
 import de.cosmocode.palava.bridge.call.Call;
 import de.cosmocode.palava.bridge.call.CallType;
-import de.cosmocode.palava.bridge.content.ErrorContent;
 import de.cosmocode.palava.bridge.request.HttpRequest;
 import de.cosmocode.palava.bridge.scope.Scopes;
 import de.cosmocode.palava.bridge.session.HttpSession;
@@ -184,39 +183,44 @@ final class LegacyHandler extends SimpleChannelHandler {
         }
     }
     
-    private void close(Channel channel) {
-        final HttpRequest request = requests.remove(channel);
-        
-        registry.notifySilent(IpcConnectionDestroyEvent.class, new Procedure<IpcConnectionDestroyEvent>() {
-           
+    private void close(final Channel channel) {
+        channel.close().addListener(new ChannelFutureListener() {
+            
             @Override
-            public void apply(IpcConnectionDestroyEvent input) {
-                input.eventIpcConnectionDestroy(request);
+            public void operationComplete(ChannelFuture future) throws Exception {
+                final HttpRequest request = requests.remove(channel);
+                
+                registry.notifySilent(IpcConnectionDestroyEvent.class, new Procedure<IpcConnectionDestroyEvent>() {
+                    
+                    @Override
+                    public void apply(IpcConnectionDestroyEvent input) {
+                        input.eventIpcConnectionDestroy(request);
+                    }
+                    
+                });
+                
+                request.clear();
+                
             }
             
         });
-        
-        request.clear();
     }
     
     @Override
     public void exceptionCaught(ChannelHandlerContext context, ExceptionEvent event) throws Exception {
         final Channel channel = event.getChannel();
-        final Content content = ErrorContent.create(event.getCause());
-        LOG.trace("Writing error content to channel", event.getCause());
-        channel.write(content).addListener(new ChannelFutureListener() {
-            
-            @Override
-            public void operationComplete(ChannelFuture future) throws Exception {
-                future.getChannel().close();
-            }
-            
-        });
+        LOG.error("Uncaught exception", event.getCause());
+        channel.close();
     }
     
     @Override
     public void channelDisconnected(ChannelHandlerContext context, ChannelStateEvent event) throws Exception {
-        Preconditions.checkState(requests.get(event.getChannel()) == null, "Request still set");
+        final HttpRequest request = requests.get(event.getChannel());
+        if (request == null) {
+            return;
+        } else {
+            LOG.warn("Request {} was not closed properly", request);
+        }
     }
     
     /**

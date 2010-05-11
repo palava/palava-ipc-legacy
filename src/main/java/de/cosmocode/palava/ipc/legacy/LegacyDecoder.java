@@ -18,6 +18,8 @@ package de.cosmocode.palava.ipc.legacy;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CharsetDecoder;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -28,6 +30,8 @@ import org.jboss.netty.channel.ChannelHandler.Sharable;
 import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -62,6 +66,8 @@ import de.cosmocode.patterns.ThreadSafe;
 @Sharable
 @ThreadSafe
 final class LegacyDecoder extends OneToOneDecoder {
+
+    public static final CharsetDecoder DECODER = Charsets.UTF_8.newDecoder();
 
     @Override
     protected Object decode(ChannelHandlerContext context, Channel channel, Object message) throws Exception {
@@ -156,6 +162,14 @@ final class LegacyDecoder extends OneToOneDecoder {
             return ByteBuffers.asInputStream(getHeader().getContent());
         }
         
+        protected final String decodeContent() {
+            try {
+                return DECODER.decode(getHeader().getContent()).toString();
+            } catch (CharacterCodingException e) {
+                throw new IllegalArgumentException(e);
+            }
+        }
+        
     }
     
     /**
@@ -195,7 +209,7 @@ final class LegacyDecoder extends OneToOneDecoder {
         public InternalDataCall(Header header) {
             super(header);
             this.call = new InternalJsonCall(header);
-            this.text = new String(header.getContent().array(), Charsets.UTF_8);
+            this.text = decodeContent();
         }
 
         @Override
@@ -227,6 +241,8 @@ final class LegacyDecoder extends OneToOneDecoder {
      * @author Willi Schoenborn
      */
     private static final class InternalJsonCall extends AbstractCall implements JsonCall {
+        
+        private static final Logger LOG = LoggerFactory.getLogger(InternalJsonCall.class);
 
         private JSONObject json;
         private UtilityMap<String, Object> map;
@@ -239,7 +255,8 @@ final class LegacyDecoder extends OneToOneDecoder {
         @Override
         public JSONObject getJSONObject() throws ConnectionLostException, JSONException {
             if (json == null) {
-                final String text = new String(getHeader().getContent().array(), Charsets.UTF_8);
+                final String text = decodeContent();
+                LOG.trace("Decoding {}", text);
                 json = new JSONObject(text);
             }
             return json;
@@ -323,7 +340,7 @@ final class LegacyDecoder extends OneToOneDecoder {
         @Override
         public String getText() {
             if (text == null) {
-                text = new String(getHeader().getContent().array(), Charsets.UTF_8);
+                text = decodeContent();
             }
             return text;
         }

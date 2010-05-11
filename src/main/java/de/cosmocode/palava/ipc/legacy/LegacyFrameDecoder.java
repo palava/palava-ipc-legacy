@@ -24,9 +24,10 @@ import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.frame.FrameDecoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Preconditions;
 
 import de.cosmocode.palava.bridge.Header;
 import de.cosmocode.palava.bridge.call.CallType;
@@ -41,6 +42,8 @@ import de.cosmocode.palava.bridge.call.CallType;
 @NotThreadSafe
 final class LegacyFrameDecoder extends FrameDecoder {
 
+    private static final Logger LOG = LoggerFactory.getLogger(LegacyFrameDecoder.class);
+    
     /**
      * Identifies the different parts of the protocol structure.
      *
@@ -99,29 +102,36 @@ final class LegacyFrameDecoder extends FrameDecoder {
     protected Header decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
         if (buffer.readable()) {
             if (part == null) part = Part.TYPE;
+            
+            if (part == Part.CONTENT) {
+                return contentOf(buffer);
+            }
+            
+        loop:
             for (int i = buffer.readerIndex(); i < buffer.writerIndex(); i++) {
                 final byte c = buffer.getByte(i);
                 switch (part) {
                     case TYPE: {
                         if (c == ':') {
                             type = readAndIncrement(buffer, i);
+                            LOG.trace("Setting type to {}", type);
                             part = Part.COLON;
                         }
                         break;
                     }
                     case COLON: {
                         buffer.skipBytes(1);
+                        checkState(c == '/', ": must be followed by first / but was %s", c);
                         part = Part.FIRST_SLASH;
                         break;
                     }
                     case FIRST_SLASH: {
-                        Preconditions.checkState(c == '/', ": must be followed by /");
                         buffer.skipBytes(1);
+                        checkState(c == '/', "first / must be followed by second / but was %s", c);
                         part = Part.SECOND_SLASH;
                         break;
                     }
                     case SECOND_SLASH: {
-                        Preconditions.checkState(c == '/', "/ must be followed by /");
                         buffer.skipBytes(1);
                         part = Part.NAME;
                         break;
@@ -129,6 +139,7 @@ final class LegacyFrameDecoder extends FrameDecoder {
                     case NAME: {
                         if (c == '/') {
                             name = readAndIncrement(buffer, i);
+                            LOG.trace("Setting name to {}", name);
                             part = Part.THIRD_SLASH;
                         }
                         break;
@@ -141,54 +152,65 @@ final class LegacyFrameDecoder extends FrameDecoder {
                     case SESSION_ID: {
                         if (c == '/') {
                             sessionId = readAndIncrement(buffer, i);
+                            LOG.trace("Setting sessionId to {}", sessionId);
                             part = Part.FOURTH_SLASH;
                         }
                         break;
                     }
                     case FOURTH_SLASH: {
                         buffer.skipBytes(1);
+                        checkState(c == '(', "fourth / must be followed by ( but was %s", c);
                         part = Part.LEFT_PARENTHESIS;
                         break;
                     }
                     case LEFT_PARENTHESIS: {
-                        Preconditions.checkState(c == '(', "/ must be followed by (");
                         buffer.skipBytes(1);
                         part = Part.CONTENT_LENGTH;
                         break;
                     }
                     case CONTENT_LENGTH: {
                         if (c == ')') {
-                            length = Integer.parseInt(readAndIncrement(buffer, i));
+                            final String value = readAndIncrement(buffer, i);
+                            length = Integer.parseInt(value);
+                            LOG.trace("Setting content length to {}", value);
                             part = Part.RIGHT_PARENTHESIS;
                         }
                         break;
                     }
                     case RIGHT_PARENTHESIS: {
-                        buffer.skipBytes(i);
+                        buffer.skipBytes(1);
+                        checkState(c == '?', ") must be followed by ? but was %s", c);
                         part = Part.QUESTION_MARK;
                         break;
                     }
                     case QUESTION_MARK: {
-                        Preconditions.checkState(c == '?', ") must be followed by ?");
                         buffer.skipBytes(1);
                         part = Part.CONTENT;
-                        break;
-                    }
-                    case CONTENT: {
-                        if (buffer.readableBytes() >= length) {
-                            content = buffer.toByteBuffer(i, length);
-                            return new InternalHeader();
-                        }
-                        break;
+                        break loop;
                     }
                     default: {
                         throw new AssertionError("Default case matched part " + part);
                     }
                 }
             }
+            
         }
         
         return null;
+    }
+    
+    private Header contentOf(ChannelBuffer buffer) {
+        if (buffer.readableBytes() >= length) {
+            LOG.trace("Retrieving content from index {} and length {}", buffer.readerIndex(), length);
+            content = buffer.toByteBuffer(buffer.readerIndex(), length);
+            LOG.trace("Setting content to {}", content);
+            buffer.skipBytes(length);
+            final Header header = new InternalHeader();
+            LOG.trace("Incoming call {}", header);
+            return header;
+        } else {
+            return null;
+        }
     }
     
     private String readAndIncrement(ChannelBuffer buffer, int currentIndex) {
@@ -198,6 +220,14 @@ final class LegacyFrameDecoder extends FrameDecoder {
         return string;
     }
 
+    private void checkState(boolean state, String format, byte c) {
+        if (state) {
+            return;
+        } else {
+            throw new IllegalArgumentException(String.format(format, (char) c)); 
+        }
+    }
+    
     /**
      * Internal implementation of the {@link Header} interface.
      *
@@ -206,7 +236,7 @@ final class LegacyFrameDecoder extends FrameDecoder {
      */
     private final class InternalHeader implements Header {
         
-        private final CallType callType = CallType.valueOf(type);
+        private final CallType callType = CallType.valueOf(type.toUpperCase());
         
         @Override
         public CallType getCallType() {
@@ -232,6 +262,15 @@ final class LegacyFrameDecoder extends FrameDecoder {
         public ByteBuffer getContent() {
             return content;
         }
+
+        @Override
+        public String toString() {
+            return String.format("Header [callType=%s, name=%s, sessionId=%s, contentLength=%s, content=%s]",
+                callType, getAliasedName(), getSessionId(), getContentLength(), getContent()
+            );
+        }
+        
+        
         
     }
     
