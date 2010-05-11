@@ -26,8 +26,10 @@ import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
+import com.google.inject.multibindings.Multibinder;
 
 import de.cosmocode.palava.bridge.Header;
+import de.cosmocode.palava.bridge.command.Alias;
 
 /**
  * Binds all legacy decoders.
@@ -48,6 +50,7 @@ public final class LegacyNettyModule implements Module {
         binder.bind(CommandExecutor.class).to(LegacyCommandExecutor.class).in(Singleton.class);
         binder.bind(Executor.class).to(LegacyExecutor.class).in(Singleton.class);
         binder.bind(JobExecutor.class).to(LegacyJobExecutor.class).in(Singleton.class);
+        Multibinder.newSetBinder(binder, Alias.class);
     }
     
     /**

@@ -203,7 +203,7 @@ final class LegacyHandler extends SimpleChannelHandler {
     public void exceptionCaught(ChannelHandlerContext context, ExceptionEvent event) throws Exception {
         final Channel channel = event.getChannel();
         final Content content = ErrorContent.create(event.getCause());
-        LOG.trace("Writing error content to channel");
+        LOG.trace("Writing error content to channel", event.getCause());
         channel.write(content).addListener(new ChannelFutureListener() {
             
             @Override
