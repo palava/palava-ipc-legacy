@@ -18,6 +18,7 @@ package de.cosmocode.palava.ipc.legacy;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CharsetDecoder;
 import java.util.LinkedHashMap;
@@ -164,6 +165,7 @@ final class LegacyDecoder extends OneToOneDecoder {
         
         protected final String decodeContent() {
             try {
+                // FIXME copies the content
                 return DECODER.decode(getHeader().getContent()).toString();
             } catch (CharacterCodingException e) {
                 throw new IllegalArgumentException(e);
@@ -209,6 +211,7 @@ final class LegacyDecoder extends OneToOneDecoder {
         public InternalDataCall(Header header) {
             super(header);
             this.call = new InternalJsonCall(header);
+            // FIXME is doing double the work
             this.text = decodeContent();
         }
 
