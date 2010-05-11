@@ -27,6 +27,8 @@ import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 
+import de.cosmocode.palava.bridge.Header;
+
 /**
  * Binds all legacy decoders.
  *
@@ -42,6 +44,10 @@ public final class LegacyNettyModule implements Module {
         binder.bind(LegacyDecoder.class).in(Singleton.class);
         binder.bind(LegacyEncoder.class).in(Singleton.class);
         binder.bind(LegacyHandler.class).in(Singleton.class);
+        binder.bind(CommandCache.class).to(LegacyCommandCache.class).in(Singleton.class);
+        binder.bind(CommandExecutor.class).to(LegacyCommandExecutor.class).in(Singleton.class);
+        binder.bind(Executor.class).to(LegacyExecutor.class).in(Singleton.class);
+        binder.bind(JobExecutor.class).to(LegacyJobExecutor.class).in(Singleton.class);
     }
     
     /**

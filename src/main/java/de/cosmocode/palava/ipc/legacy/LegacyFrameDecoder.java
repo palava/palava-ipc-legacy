@@ -35,7 +35,7 @@ import de.cosmocode.palava.bridge.call.CallType;
  * Decodes framed chunks of the legacy palava protocol which looks like:<br />
  * {@code <type>://<aliasedName>/<sessionId>/(<contentLength>)?<content>}.
  *
- * @since 
+ * @since 1.0 
  * @author Willi Schoenborn
  */
 @NotThreadSafe
@@ -78,7 +78,7 @@ final class LegacyFrameDecoder extends FrameDecoder {
     
     /**
      * Defines the current part. The readerIndex of the buffer will
-     * be set to the first char of the corresponding type.
+     * be set to the first byte of the corresponding part.
      */
     private Part part;
 
@@ -95,12 +95,12 @@ final class LegacyFrameDecoder extends FrameDecoder {
     // Reducing cyclomatic complexity would dramatically reduce readability
     /* CHECKSTYLE:OFF */
     @Override
-    protected Header decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
     /* CHECKSTYLE:ON */
+    protected Header decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
         if (buffer.readable()) {
+            if (part == null) part = Part.TYPE;
             for (int i = buffer.readerIndex(); i < buffer.writerIndex(); i++) {
                 final byte c = buffer.getByte(i);
-                if (part == null) part = Part.TYPE;
                 switch (part) {
                     case TYPE: {
                         if (c == ':') {
@@ -110,19 +110,20 @@ final class LegacyFrameDecoder extends FrameDecoder {
                         break;
                     }
                     case COLON: {
-                        Preconditions.checkState(c == '/', ": must be followed by /");
                         buffer.skipBytes(1);
                         part = Part.FIRST_SLASH;
                         break;
                     }
                     case FIRST_SLASH: {
-                        Preconditions.checkState(c == '/', "/ must be followed by /");
+                        Preconditions.checkState(c == '/', ": must be followed by /");
                         buffer.skipBytes(1);
                         part = Part.SECOND_SLASH;
                         break;
                     }
                     case SECOND_SLASH: {
+                        Preconditions.checkState(c == '/', "/ must be followed by /");
                         buffer.skipBytes(1);
+                        part = Part.NAME;
                         break;
                     }
                     case NAME: {
@@ -134,6 +135,7 @@ final class LegacyFrameDecoder extends FrameDecoder {
                     }
                     case THIRD_SLASH: {
                         buffer.skipBytes(1);
+                        part = Part.SESSION_ID;
                         break;
                     }
                     case SESSION_ID: {
@@ -144,12 +146,14 @@ final class LegacyFrameDecoder extends FrameDecoder {
                         break;
                     }
                     case FOURTH_SLASH: {
-                        Preconditions.checkState(c == '(', "/ must be followed by (");
                         buffer.skipBytes(1);
+                        part = Part.LEFT_PARENTHESIS;
                         break;
                     }
                     case LEFT_PARENTHESIS: {
+                        Preconditions.checkState(c == '(', "/ must be followed by (");
                         buffer.skipBytes(1);
+                        part = Part.CONTENT_LENGTH;
                         break;
                     }
                     case CONTENT_LENGTH: {
@@ -160,17 +164,22 @@ final class LegacyFrameDecoder extends FrameDecoder {
                         break;
                     }
                     case RIGHT_PARENTHESIS: {
-                        Preconditions.checkState(c == ')', ") must be followed by ?");
                         buffer.skipBytes(i);
+                        part = Part.QUESTION_MARK;
                         break;
                     }
                     case QUESTION_MARK: {
+                        Preconditions.checkState(c == '?', ") must be followed by ?");
                         buffer.skipBytes(1);
+                        part = Part.CONTENT;
                         break;
                     }
                     case CONTENT: {
-                        content = buffer.toByteBuffer(i, length);
-                        return new InternalHeader();
+                        if (buffer.readableBytes() >= length) {
+                            content = buffer.toByteBuffer(i, length);
+                            return new InternalHeader();
+                        }
+                        break;
                     }
                     default: {
                         throw new AssertionError("Default case matched part " + part);
@@ -183,9 +192,10 @@ final class LegacyFrameDecoder extends FrameDecoder {
     }
     
     private String readAndIncrement(ChannelBuffer buffer, int currentIndex) {
-        final String s = buffer.toString(buffer.readerIndex(), currentIndex - buffer.readerIndex(), Charsets.UTF_8);
+        final int size = currentIndex - buffer.readerIndex();
+        final String string = buffer.toString(buffer.readerIndex(), size, Charsets.UTF_8);
         buffer.readerIndex(currentIndex);
-        return s;
+        return string;
     }
 
     /**

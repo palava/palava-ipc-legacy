@@ -43,20 +43,17 @@ import com.google.inject.Inject;
 
 import de.cosmocode.collections.Procedure;
 import de.cosmocode.palava.bridge.Content;
-import de.cosmocode.palava.bridge.Server;
 import de.cosmocode.palava.bridge.call.Arguments;
 import de.cosmocode.palava.bridge.call.Call;
 import de.cosmocode.palava.bridge.call.CallType;
-import de.cosmocode.palava.bridge.command.Command;
-import de.cosmocode.palava.bridge.command.CommandException;
-import de.cosmocode.palava.bridge.command.CommandManager;
-import de.cosmocode.palava.bridge.command.Job;
 import de.cosmocode.palava.bridge.content.ErrorContent;
 import de.cosmocode.palava.bridge.request.HttpRequest;
+import de.cosmocode.palava.bridge.scope.Scopes;
 import de.cosmocode.palava.bridge.session.HttpSession;
 import de.cosmocode.palava.core.Registry;
+import de.cosmocode.palava.ipc.IpcCallCreateEvent;
+import de.cosmocode.palava.ipc.IpcCallDestroyEvent;
 import de.cosmocode.palava.ipc.IpcCallScope;
-import de.cosmocode.palava.ipc.IpcCommand;
 import de.cosmocode.palava.ipc.IpcConnectionCreateEvent;
 import de.cosmocode.palava.ipc.IpcConnectionDestroyEvent;
 import de.cosmocode.palava.ipc.IpcSession;
@@ -70,7 +67,6 @@ import de.cosmocode.patterns.ThreadSafe;
  * @since 1.0
  * @author Willi Schoenborn
  */
-@SuppressWarnings("deprecation")
 @LegacySucks
 @Sharable
 @ThreadSafe
@@ -91,18 +87,15 @@ final class LegacyHandler extends SimpleChannelHandler {
 
     private final IpcCallScope scope;
     
-    private final CommandManager commandManager;
-    
-    private final Server server;
+    private final Executor executor;
     
     @Inject
     public LegacyHandler(Registry registry, IpcSessionProvider sessionProvider, 
-        IpcCallScope scope, CommandManager commandManager, Server server) {
+        IpcCallScope scope, Executor executor) {
         this.registry = Preconditions.checkNotNull(registry, "Registry");
         this.sessionProvider = Preconditions.checkNotNull(sessionProvider, "SessionProvider");
         this.scope = Preconditions.checkNotNull(scope, "Scope");
-        this.commandManager = Preconditions.checkNotNull(commandManager, "CommandManager");
-        this.server = Preconditions.checkNotNull(server, "Server");
+        this.executor = Preconditions.checkNotNull(executor, "Executor");
     }
 
     @Override
@@ -126,7 +119,9 @@ final class LegacyHandler extends SimpleChannelHandler {
             } else if (call instanceof DetachedCall) {
                 final DetachedCall detachedCall = DetachedCall.class.cast(call);
                 final HttpRequest request = requests.get(channel);
-                call(detachedCall, request);
+                detachedCall.attachTo(request);
+                final Content content = call(detachedCall);
+                channel.write(content);
             } else {
                 throw new IllegalStateException(String.format("%s is of unknown type", call));
             }
@@ -137,12 +132,13 @@ final class LegacyHandler extends SimpleChannelHandler {
         final InternalHttpRequest request = requests.get(channel);
         final Arguments arguments = call.getArguments();
         request.setReferer(arguments.getString(HTTP_REFERER));
-        request.setRemoteAddress(arguments.getString(REMOTE_ADDR));
+        final String remoteAddress = arguments.getString(REMOTE_ADDR);
+        request.setRemoteAddress(remoteAddress);
         request.setRequestUri(arguments.getString(REQUEST_URI));
         request.setUserAgent(arguments.getString(HTTP_USER_AGENT));
         
         final String sessionId = call.getHeader().getSessionId();
-        final IpcSession session = sessionProvider.getSession(sessionId, null);
+        final IpcSession session = sessionProvider.getSession(sessionId, remoteAddress);
         final HttpSession httpSession = new LegacyHttpSessionAdapter(session);
         request.attachTo(httpSession);
         
@@ -156,44 +152,35 @@ final class LegacyHandler extends SimpleChannelHandler {
         });
     }
     
-    private Content call(DetachedCall call, HttpRequest request) {
-        call.attachTo(request);
-    
-        final Object raw;
-        
+    private Content call(final Call call) {
         try {
-            raw = commandManager.forName(call.getHeader().getAliasedName());
-        /* CHECKSTYLE:OFF */
-        } catch (RuntimeException e) {
-        /* CHECKSTYLE:ON */
-            return ErrorContent.create(e);
-        }
-        
-        final Command command;
-        
-        if (raw instanceof IpcCommand) {
-            command = new IpcCommandCommand(IpcCommand.class.cast(raw));
-        } else if (raw instanceof Job) {
-            command = new JobCommand(server, Job.class.cast(raw));
-        } else if (raw instanceof Command) {
-            command = Command.class.cast(raw);
-        } else {
-            throw new UnsupportedOperationException(String.format("Unknown command %s", raw));
-        }
+            registry.notify(IpcCallCreateEvent.class, new Procedure<IpcCallCreateEvent>() {
+                
+                @Override
+                public void apply(IpcCallCreateEvent input) {
+                    input.eventIpcCallCreate(call);
+                }
+                
+            });
             
-        try {
             scope.enter(call);
-            return command.execute(call);
-        /* CHECKSTYLE:OFF */
-        } catch (RuntimeException e) {
-        /* CHECKSTYLE:ON */
-            LOG.warn("Unexpected exception during execute", e);
-            return ErrorContent.create(e);
-        } catch (CommandException e) {
-            LOG.warn("Exception during execute", e);
-            return ErrorContent.create(e);
+            Scopes.setCurrentCall(call);
+            
+            return executor.execute(call);
         } finally {
+            Scopes.clean();
             scope.exit();
+            
+            registry.notifySilent(IpcCallDestroyEvent.class, new Procedure<IpcCallDestroyEvent>() {
+                
+                @Override
+                public void apply(IpcCallDestroyEvent input) {
+                    input.eventIpcCallDestroy(call);
+                }
+                
+            });
+            
+            call.clear();
         }
     }
     
