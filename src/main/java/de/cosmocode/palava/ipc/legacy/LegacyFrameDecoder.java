@@ -107,7 +107,6 @@ final class LegacyFrameDecoder extends FrameDecoder {
                 return contentOf(buffer);
             }
             
-        loop:
             for (int i = buffer.readerIndex(); i < buffer.writerIndex(); i++) {
                 final byte c = buffer.getByte(i);
                 switch (part) {
@@ -134,9 +133,11 @@ final class LegacyFrameDecoder extends FrameDecoder {
                     case SECOND_SLASH: {
                         buffer.skipBytes(1);
                         part = Part.NAME;
+                        i--;
                         break;
                     }
                     case NAME: {
+                        // c == *second* char of name
                         if (c == '/') {
                             name = readAndIncrement(buffer, i);
                             LOG.trace("Setting name to {}", name);
@@ -186,7 +187,7 @@ final class LegacyFrameDecoder extends FrameDecoder {
                     case QUESTION_MARK: {
                         buffer.skipBytes(1);
                         part = Part.CONTENT;
-                        break loop;
+                        return null;
                     }
                     default: {
                         throw new AssertionError("Default case matched part " + part);
@@ -201,12 +202,12 @@ final class LegacyFrameDecoder extends FrameDecoder {
     
     private Header contentOf(ChannelBuffer buffer) {
         if (buffer.readableBytes() >= length) {
-            LOG.trace("Retrieving content from index {} and length {}", buffer.readerIndex(), length);
             content = buffer.toByteBuffer(buffer.readerIndex(), length);
             LOG.trace("Setting content to {}", content);
             buffer.skipBytes(length);
             final Header header = new InternalHeader();
             LOG.trace("Incoming call {}", header);
+            reset();
             return header;
         } else {
             return null;
@@ -228,6 +229,15 @@ final class LegacyFrameDecoder extends FrameDecoder {
         }
     }
     
+    private void reset() {
+        part = null;
+        type = null;
+        name = null;
+        sessionId = null;
+        length = 0;
+        content = null;
+    }
+    
     /**
      * Internal implementation of the {@link Header} interface.
      *
@@ -237,6 +247,14 @@ final class LegacyFrameDecoder extends FrameDecoder {
     private final class InternalHeader implements Header {
         
         private final CallType callType = CallType.valueOf(type.toUpperCase());
+        
+        private final String name = LegacyFrameDecoder.this.name;
+        
+        private final String sessionId = LegacyFrameDecoder.this.sessionId;
+        
+        private final int length = LegacyFrameDecoder.this.length;
+        
+        private final ByteBuffer content = LegacyFrameDecoder.this.content;
         
         @Override
         public CallType getCallType() {
@@ -269,8 +287,6 @@ final class LegacyFrameDecoder extends FrameDecoder {
                 callType, getAliasedName(), getSessionId(), getContentLength(), getContent()
             );
         }
-        
-        
         
     }
     

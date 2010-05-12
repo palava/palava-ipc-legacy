@@ -21,6 +21,8 @@ import java.net.InetSocketAddress;
 import java.util.Map;
 
 import org.codehaus.jackson.map.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -37,6 +39,8 @@ import de.cosmocode.palava.ipc.netty.NettyClient;
  * @author Willi Schoenborn
  */
 public final class LegacyNettyClient implements LegacyClient {
+    
+    private static final Logger LOG = LoggerFactory.getLogger(LegacyNettyClient.class);
 
     private final Client client = new NettyClient();
     
@@ -76,6 +80,14 @@ public final class LegacyNettyClient implements LegacyClient {
             final String encodedContent;
             
             switch (type) {
+                case OPEN: {
+                    try {
+                        encodedContent = mapper.writeValueAsString(content);
+                    } catch (IOException e) {
+                        throw new IllegalArgumentException(e);
+                    }
+                    break;
+                }
                 case DATA: {
                     try {
                         encodedContent = mapper.writeValueAsString(content);
@@ -85,6 +97,14 @@ public final class LegacyNettyClient implements LegacyClient {
                     break;
                 }
                 case JSON: {
+                    try {
+                        encodedContent = mapper.writeValueAsString(content);
+                    } catch (IOException e) {
+                        throw new IllegalArgumentException(e);
+                    }
+                    break;
+                }
+                case CLOSE: {
                     try {
                         encodedContent = mapper.writeValueAsString(content);
                     } catch (IOException e) {
@@ -104,6 +124,7 @@ public final class LegacyNettyClient implements LegacyClient {
                 encodedContent.getBytes(Charsets.UTF_8).length,
                 encodedContent
             );
+            LOG.debug("Sending request: {}", request);
             final String response = send(request);
             @SuppressWarnings("unchecked")
             final T decoded = (T) decode(response);

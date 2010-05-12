@@ -47,6 +47,7 @@ import de.cosmocode.palava.bridge.Content;
 import de.cosmocode.palava.bridge.call.Arguments;
 import de.cosmocode.palava.bridge.call.Call;
 import de.cosmocode.palava.bridge.call.CallType;
+import de.cosmocode.palava.bridge.content.JsonContent;
 import de.cosmocode.palava.bridge.request.HttpRequest;
 import de.cosmocode.palava.bridge.scope.Scopes;
 import de.cosmocode.palava.bridge.session.HttpSession;
@@ -72,10 +73,10 @@ import de.cosmocode.palava.scope.AbstractScopeContext;
 @ThreadSafe
 final class LegacyHandler extends SimpleChannelHandler {
     
-    private static final String REQUEST_URI = "REQUEST_URI";
-    private static final String HTTP_REFERER = "HTTP_REFERER";
-    private static final String REMOTE_ADDR = "REMOTE_ADDR";
-    private static final String HTTP_USER_AGENT = "HTTP_USER_AGENT";
+    static final String REQUEST_URI = "REQUEST_URI";
+    static final String HTTP_REFERER = "HTTP_REFERER";
+    static final String REMOTE_ADDR = "REMOTE_ADDR";
+    static final String HTTP_USER_AGENT = "HTTP_USER_AGENT";
 
     private static final Logger LOG = LoggerFactory.getLogger(LegacyHandler.class);
     
@@ -143,11 +144,11 @@ final class LegacyHandler extends SimpleChannelHandler {
     private void open(Call call, Channel channel) {
         final InternalHttpRequest request = requests.get(channel);
         final Arguments arguments = call.getArguments();
-        request.setReferer(arguments.getString(HTTP_REFERER));
-        final String remoteAddress = arguments.getString(REMOTE_ADDR);
+        request.setReferer(arguments.getString(HTTP_REFERER, null));
+        final String remoteAddress = arguments.getString(REMOTE_ADDR, null);
         request.setRemoteAddress(remoteAddress);
-        request.setRequestUri(arguments.getString(REQUEST_URI));
-        request.setUserAgent(arguments.getString(HTTP_USER_AGENT));
+        request.setRequestUri(arguments.getString(REQUEST_URI, null));
+        request.setUserAgent(arguments.getString(HTTP_USER_AGENT, null));
         
         final String sessionId = call.getHeader().getSessionId();
         final IpcSession session = sessionProvider.getSession(sessionId, remoteAddress);
@@ -155,6 +156,7 @@ final class LegacyHandler extends SimpleChannelHandler {
         request.attachTo(httpSession);
         
         connectionCreateEvent.eventIpcConnectionCreate(request);
+        channel.write(JsonContent.EMPTY);
     }
     
     private Content call(final Call call) {
@@ -173,14 +175,21 @@ final class LegacyHandler extends SimpleChannelHandler {
     }
     
     private void close(final Channel channel) {
-        channel.close().addListener(new ChannelFutureListener() {
+        channel.write(JsonContent.EMPTY).addListener(new ChannelFutureListener() {
             
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {
-                final HttpRequest request = requests.remove(channel);
-                connectionDestroyEvent.eventIpcConnectionDestroy(request);
-                request.clear();
-                
+                channel.close().addListener(new ChannelFutureListener() {
+                    
+                    @Override
+                    public void operationComplete(ChannelFuture future) throws Exception {
+                        final HttpRequest request = requests.remove(channel);
+                        connectionDestroyEvent.eventIpcConnectionDestroy(request);
+                        request.clear();
+                        
+                    }
+                    
+                });
             }
             
         });
