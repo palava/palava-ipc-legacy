@@ -72,7 +72,7 @@ final class LegacyExecutor implements Executor {
         try {
             if (raw instanceof IpcCommand) {
                 LOG.trace("Executing ipc command {}", raw);
-                final Map<String, Object> result = ipcCommandExecutor.execute(name, call);
+                final Map<String, Object> result = ipcCommandExecutor.execute(raw.getClass().getName(), call);
                 return new JsonContent(result);
             } else if (raw instanceof Job) {
                 final Job job = Job.class.cast(raw);
