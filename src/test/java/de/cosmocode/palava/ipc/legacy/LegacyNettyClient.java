@@ -68,7 +68,7 @@ public final class LegacyNettyClient implements LegacyClient {
         
         @Override
         public <T> T send(CallType type, String name, Map<String, Object> content) {
-            return send(type, name, "", content);
+            return this.<T>send(type, name, "", content);
         }
         
         @Override

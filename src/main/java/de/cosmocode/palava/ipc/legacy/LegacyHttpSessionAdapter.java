@@ -157,7 +157,7 @@ final class LegacyHttpSessionAdapter implements HttpSession {
 
     @Override
     public <K, V> V get(K key) {
-        return session.get(key);
+        return session.<K, V>get(key);
     }
 
     @Override
@@ -172,7 +172,7 @@ final class LegacyHttpSessionAdapter implements HttpSession {
 
     @Override
     public <K, V> V remove(K key) {
-        return session.remove(key);
+        return session.<K, V>remove(key);
     }
 
     @Override
