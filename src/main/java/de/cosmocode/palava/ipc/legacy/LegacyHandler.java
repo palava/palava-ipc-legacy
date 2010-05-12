@@ -164,7 +164,6 @@ final class LegacyHandler extends SimpleChannelHandler {
             callCreateEvent.eventIpcCallCreate(call);
             scope.enter(call);
             Scopes.setCurrentCall(call);
-            
             return executor.execute(call);
         } finally {
             Scopes.clean();
@@ -184,6 +183,7 @@ final class LegacyHandler extends SimpleChannelHandler {
                     @Override
                     public void operationComplete(ChannelFuture future) throws Exception {
                         final HttpRequest request = requests.remove(channel);
+                        LOG.trace("Closing connection {}", request);
                         connectionDestroyEvent.eventIpcConnectionDestroy(request);
                         request.clear();
                         
@@ -203,7 +203,7 @@ final class LegacyHandler extends SimpleChannelHandler {
     }
     
     @Override
-    public void channelDisconnected(ChannelHandlerContext context, ChannelStateEvent event) throws Exception {
+    public void channelClosed(ChannelHandlerContext context, ChannelStateEvent event) throws Exception {
         final HttpRequest request = requests.get(event.getChannel());
         if (request == null) {
             return;
