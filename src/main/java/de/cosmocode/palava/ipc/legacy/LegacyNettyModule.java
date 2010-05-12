@@ -29,6 +29,8 @@ import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
 
 import de.cosmocode.palava.bridge.Header;
+import de.cosmocode.palava.bridge.Server;
+import de.cosmocode.palava.bridge.ServiceManager;
 import de.cosmocode.palava.bridge.command.Alias;
 
 /**
@@ -41,16 +43,23 @@ public final class LegacyNettyModule implements Module {
 
     @Override
     public void configure(Binder binder) {
-        // frame decoders are stateful
+        // stateful decoders
         binder.bind(LegacyFrameDecoder.class).in(Scopes.NO_SCOPE);
+        
+        // decoders/encoders
         binder.bind(LegacyDecoder.class).in(Singleton.class);
         binder.bind(LegacyEncoder.class).in(Singleton.class);
         binder.bind(LegacyHandler.class).in(Singleton.class);
+
+        // legacy services
         binder.bind(CommandCache.class).to(LegacyCommandCache.class).in(Singleton.class);
-        binder.bind(CommandExecutor.class).to(LegacyCommandExecutor.class).in(Singleton.class);
+        Multibinder.newSetBinder(binder, Alias.class);
         binder.bind(Executor.class).to(LegacyExecutor.class).in(Singleton.class);
         binder.bind(JobExecutor.class).to(LegacyJobExecutor.class).in(Singleton.class);
-        Multibinder.newSetBinder(binder, Alias.class);
+        binder.bind(CommandExecutor.class).to(LegacyCommandExecutor.class).in(Singleton.class);
+        binder.bind(LegacyServer.class).in(Singleton.class);
+        binder.bind(Server.class).to(LegacyServer.class).in(Singleton.class);
+        binder.bind(ServiceManager.class).to(LegacyServer.class).in(Singleton.class);
     }
     
     /**

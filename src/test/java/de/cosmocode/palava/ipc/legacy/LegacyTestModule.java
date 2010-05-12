@@ -19,7 +19,6 @@ package de.cosmocode.palava.ipc.legacy;
 import com.google.inject.Binder;
 import com.google.inject.Module;
 
-import de.cosmocode.palava.bridge.ServerModule;
 import de.cosmocode.palava.concurrent.BackgroundSchedulerModule;
 import de.cosmocode.palava.concurrent.DefaultThreadProviderModule;
 import de.cosmocode.palava.concurrent.ExecutorModule;
@@ -52,7 +51,6 @@ public final class LegacyTestModule implements Module {
         binder.install(new LifecycleModule());
         binder.install(new DefaultRegistryModule());
         binder.install(new IpcModule());
-        binder.install(new ServerModule());
         binder.install(new LocalIpcCommandExecutorModule());
         binder.install(new FakeMBeanServerModule());
         binder.install(new DefaultThreadProviderModule());

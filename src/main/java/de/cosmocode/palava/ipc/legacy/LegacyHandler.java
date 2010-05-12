@@ -23,6 +23,8 @@ import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
+import javax.annotation.concurrent.ThreadSafe;
+
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
@@ -58,7 +60,6 @@ import de.cosmocode.palava.ipc.IpcConnectionDestroyEvent;
 import de.cosmocode.palava.ipc.IpcSession;
 import de.cosmocode.palava.ipc.IpcSessionProvider;
 import de.cosmocode.palava.scope.AbstractScopeContext;
-import de.cosmocode.patterns.ThreadSafe;
 
 /**
  * Handler which process the legacy palava php protocol.

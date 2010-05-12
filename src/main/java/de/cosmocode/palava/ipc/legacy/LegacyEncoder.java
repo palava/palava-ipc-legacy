@@ -16,6 +16,8 @@
 
 package de.cosmocode.palava.ipc.legacy;
 
+import javax.annotation.concurrent.ThreadSafe;
+
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
@@ -27,7 +29,6 @@ import com.google.common.base.Charsets;
 
 import de.cosmocode.palava.bridge.Content;
 import de.cosmocode.palava.ipc.netty.ChannelBuffering;
-import de.cosmocode.patterns.ThreadSafe;
 
 /**
  * An encoder which encodes {@link Content} to {@link ChannelBuffer}.
@@ -53,6 +54,8 @@ final class LegacyEncoder extends OneToOneEncoder {
             final ChannelBuffer buffer = ChannelBuffers.dynamicBuffer(header.length + length);
             
             buffer.writeBytes(header);
+            
+            // this effectively copies the content in memory
             content.write(ChannelBuffering.asOutputStream(buffer));
             
             return buffer;

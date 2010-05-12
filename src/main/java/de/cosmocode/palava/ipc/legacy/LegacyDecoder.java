@@ -19,11 +19,11 @@ package de.cosmocode.palava.ipc.legacy;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.CharsetDecoder;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+
+import javax.annotation.concurrent.ThreadSafe;
 
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
@@ -56,7 +56,6 @@ import de.cosmocode.palava.bridge.request.HttpRequest;
 import de.cosmocode.palava.ipc.IpcCall;
 import de.cosmocode.palava.ipc.IpcConnection;
 import de.cosmocode.palava.scope.AbstractScopeContext;
-import de.cosmocode.patterns.ThreadSafe;
 
 /**
  * A decoder which decodes {@link Header}s into {@link IpcCall}s.
@@ -67,8 +66,6 @@ import de.cosmocode.patterns.ThreadSafe;
 @Sharable
 @ThreadSafe
 final class LegacyDecoder extends OneToOneDecoder {
-
-    public static final CharsetDecoder DECODER = Charsets.UTF_8.newDecoder();
 
     @Override
     protected Object decode(ChannelHandlerContext context, Channel channel, Object message) throws Exception {
@@ -110,16 +107,10 @@ final class LegacyDecoder extends OneToOneDecoder {
      */
     private abstract static class AbstractCall extends AbstractScopeContext implements DetachedCall {
         
-        private final Header header;
-        
         private Map<Object, Object> context;
         
         private HttpRequest request;
         
-        public AbstractCall(Header header) {
-            this.header = header;
-        }
-
         @Override
         public void attachTo(HttpRequest r) {
             this.request = Preconditions.checkNotNull(r, "Request");
@@ -149,11 +140,6 @@ final class LegacyDecoder extends OneToOneDecoder {
         }
         
         @Override
-        public Header getHeader() {
-            return header;
-        }
-        
-        @Override
         public HttpRequest getHttpRequest() {
             return request;
         }
@@ -164,12 +150,11 @@ final class LegacyDecoder extends OneToOneDecoder {
         }
         
         protected final String decodeContent() {
-            try {
-                // FIXME copies the content
-                return DECODER.decode(getHeader().getContent()).toString();
-            } catch (CharacterCodingException e) {
-                throw new IllegalArgumentException(e);
-            }
+            final Header header = getHeader();
+            final ByteBuffer buffer = header.getContent();
+            final byte[] bytes = new byte[header.getContentLength()];
+            buffer.get(bytes);
+            return new String(bytes, Charsets.UTF_8);
         }
         
     }
@@ -182,16 +167,23 @@ final class LegacyDecoder extends OneToOneDecoder {
      */
     private static final class OpenCall extends AbstractCall implements Call {
         
+        private final Header header;
+        
         private final JsonCall call;
         
         private OpenCall(Header header) {
-            super(header);
+            this.header = header;
             this.call = new InternalJsonCall(header);
         }
         
         @Override
         public Arguments getArguments() {
             return call.getArguments();
+        }
+        
+        @Override
+        public Header getHeader() {
+            return header;
         }
         
     }
@@ -203,16 +195,14 @@ final class LegacyDecoder extends OneToOneDecoder {
      * @author Willi Schoenborn
      */
     private static final class InternalDataCall extends AbstractCall implements DataCall {
-
-        private final JsonCall call;
         
-        private final String text;
+        private final Header header;
+
+        private final InternalJsonCall call;
         
         public InternalDataCall(Header header) {
-            super(header);
+            this.header = header;
             this.call = new InternalJsonCall(header);
-            // FIXME is doing double the work
-            this.text = decodeContent();
         }
 
         @Override
@@ -221,8 +211,13 @@ final class LegacyDecoder extends OneToOneDecoder {
         }
         
         @Override
+        public Header getHeader() {
+            return header;
+        }
+        
+        @Override
         public Map<String, String> getStringedArguments() {
-            if (!text.startsWith("{")) {
+            if (!call.getText().startsWith("{")) {
                 // dirty hack to ignore everything that is not a JsonObject
                 return new LinkedHashMap<String, String>();
             } else {
@@ -246,19 +241,27 @@ final class LegacyDecoder extends OneToOneDecoder {
     private static final class InternalJsonCall extends AbstractCall implements JsonCall {
         
         private static final Logger LOG = LoggerFactory.getLogger(InternalJsonCall.class);
+        
+        private final Header header;
 
+        private final String text;
+        
         private JSONObject json;
         private UtilityMap<String, Object> map;
         private Arguments arguments;
         
         public InternalJsonCall(Header header) {
-            super(header);
+            this.header = header;
+            this.text = decodeContent();
         }
 
+        public String getText() {
+            return text;
+        }
+        
         @Override
         public JSONObject getJSONObject() throws ConnectionLostException, JSONException {
             if (json == null) {
-                final String text = decodeContent();
                 LOG.trace("Decoding {}", text);
                 json = new JSONObject(text);
             }
@@ -271,6 +274,11 @@ final class LegacyDecoder extends OneToOneDecoder {
                 arguments = new InternalArguments();
             }
             return arguments;
+        }
+        
+        @Override
+        public Header getHeader() {
+            return header;
         }
         
         /**
@@ -334,10 +342,17 @@ final class LegacyDecoder extends OneToOneDecoder {
      */
     private static final class InternalTextCall extends AbstractCall implements TextCall {
         
+        private final Header header;
+        
         private String text;
         
         public InternalTextCall(Header header) {
-            super(header);
+            this.header = header;
+        }
+        
+        @Override
+        public Header getHeader() {
+            return header;
         }
 
         @Override
@@ -357,9 +372,16 @@ final class LegacyDecoder extends OneToOneDecoder {
      * @author Willi Schoenborn
      */
     private static final class InternalBinaryCall extends AbstractCall implements BinaryCall {
+        
+        private final Header header;
 
         public InternalBinaryCall(Header header) {
-            super(header);
+            this.header = header;
+        }
+        
+        @Override
+        public Header getHeader() {
+            return header;
         }
 
     }
@@ -372,8 +394,15 @@ final class LegacyDecoder extends OneToOneDecoder {
      */
     private static final class CloseCall extends AbstractCall implements Call {
         
+        private final Header header;
+        
         private CloseCall(Header header) {
-            super(header);
+            this.header = header;
+        }
+        
+        @Override
+        public Header getHeader() {
+            return header;
         }
         
     }

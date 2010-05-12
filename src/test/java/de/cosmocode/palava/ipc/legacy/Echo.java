@@ -21,6 +21,8 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.inject.Singleton;
+
 import de.cosmocode.palava.ipc.IpcCall;
 import de.cosmocode.palava.ipc.IpcCommand;
 import de.cosmocode.palava.ipc.IpcCommandExecutionException;
@@ -30,6 +32,7 @@ import de.cosmocode.palava.ipc.IpcCommandExecutionException;
  *
  * @author Willi Schoenborn
  */
+@Singleton
 public final class Echo implements IpcCommand {
 
     private static final Logger LOG = LoggerFactory.getLogger(Echo.class);

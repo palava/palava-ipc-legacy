@@ -21,10 +21,40 @@ import java.util.Map;
 import de.cosmocode.palava.bridge.call.CallType;
 import de.cosmocode.palava.ipc.netty.ClientConnection;
 
+/**
+ * Extension of the {@link ClientConnection} interface which
+ * adds legacy specific send methods.
+ *
+ * @since 1.0
+ * @author Willi Schoenborn
+ */
 public interface LegacyClientConnection extends ClientConnection {
 
-    <T> T send(CallType type, String name, Map<String, Object> content);
+    /**
+     * Sends a call of the specified type to the named job/command using
+     * the specified arguments.
+     * 
+     * @since 1.0
+     * @param <T> generic return value
+     * @param type the call type
+     * @param name the job/commmand name
+     * @param arguments the arguments
+     * @return the content/result
+     */
+    <T> T send(CallType type, String name, Map<String, Object> arguments);
 
-    <T> T send(CallType type, String name, String sessionId, Map<String, Object> content);
+    /**
+     * Sends a call of the specified type to the named job/command using
+     * the specified arguments.
+     * 
+     * @since 1.0
+     * @param <T> generic return value
+     * @param type the call type
+     * @param name the job/commmand name
+     * @param sessionId the session id
+     * @param arguments the arguments
+     * @return the content/result
+     */
+    <T> T send(CallType type, String name, String sessionId, Map<String, Object> arguments);
     
 }
