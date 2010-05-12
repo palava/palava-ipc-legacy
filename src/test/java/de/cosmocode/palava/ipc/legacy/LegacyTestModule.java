@@ -26,6 +26,7 @@ import de.cosmocode.palava.core.DefaultRegistryModule;
 import de.cosmocode.palava.core.inject.TypeConverterModule;
 import de.cosmocode.palava.core.lifecycle.LifecycleModule;
 import de.cosmocode.palava.ipc.DefaultIpcCallFilterChainFactoryModule;
+import de.cosmocode.palava.ipc.IpcEventModule;
 import de.cosmocode.palava.ipc.IpcModule;
 import de.cosmocode.palava.ipc.command.localvm.LocalIpcCommandExecutorModule;
 import de.cosmocode.palava.ipc.netty.Boss;
@@ -57,6 +58,7 @@ public final class LegacyTestModule implements Module {
         binder.install(new ExecutorModule(Boss.class, Boss.NAME));
         binder.install(new ExecutorModule(Worker.class, Worker.NAME));
         binder.install(new BackgroundSchedulerModule());
+        binder.install(new IpcEventModule());
         binder.install(new NettyModule());
         binder.install(new StoreIpcSessionModule());
         binder.install(new DefaultIpcCallFilterChainFactoryModule());

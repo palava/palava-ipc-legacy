@@ -43,7 +43,6 @@ import com.google.common.collect.Maps;
 import com.google.gag.annotation.disclaimer.LegacySucks;
 import com.google.inject.Inject;
 
-import de.cosmocode.collections.Procedure;
 import de.cosmocode.palava.bridge.Content;
 import de.cosmocode.palava.bridge.call.Arguments;
 import de.cosmocode.palava.bridge.call.Call;
@@ -51,7 +50,8 @@ import de.cosmocode.palava.bridge.call.CallType;
 import de.cosmocode.palava.bridge.request.HttpRequest;
 import de.cosmocode.palava.bridge.scope.Scopes;
 import de.cosmocode.palava.bridge.session.HttpSession;
-import de.cosmocode.palava.core.Registry;
+import de.cosmocode.palava.core.Registry.Proxy;
+import de.cosmocode.palava.core.Registry.SilentProxy;
 import de.cosmocode.palava.ipc.IpcCallCreateEvent;
 import de.cosmocode.palava.ipc.IpcCallDestroyEvent;
 import de.cosmocode.palava.ipc.IpcCallScope;
@@ -81,7 +81,13 @@ final class LegacyHandler extends SimpleChannelHandler {
     
     private final ConcurrentMap<Channel, InternalHttpRequest> requests = new MapMaker().makeMap();
     
-    private final Registry registry;
+    private final IpcConnectionCreateEvent connectionCreateEvent;
+    
+    private final IpcConnectionDestroyEvent connectionDestroyEvent;
+    
+    private final IpcCallCreateEvent callCreateEvent;
+    
+    private final IpcCallDestroyEvent callDestroyEvent;
     
     private final IpcSessionProvider sessionProvider;
 
@@ -90,9 +96,15 @@ final class LegacyHandler extends SimpleChannelHandler {
     private final Executor executor;
     
     @Inject
-    public LegacyHandler(Registry registry, IpcSessionProvider sessionProvider, 
-        IpcCallScope scope, Executor executor) {
-        this.registry = Preconditions.checkNotNull(registry, "Registry");
+    public LegacyHandler(
+        @Proxy IpcConnectionCreateEvent connectionCreateEvent, 
+        @SilentProxy IpcConnectionDestroyEvent connectionDestroyEvent,
+        @Proxy IpcCallCreateEvent callCreateEvent, @SilentProxy IpcCallDestroyEvent callDestroyEvent,
+        IpcSessionProvider sessionProvider, IpcCallScope scope, Executor executor) {
+        this.connectionCreateEvent = Preconditions.checkNotNull(connectionCreateEvent, "CreateEvent");
+        this.connectionDestroyEvent = Preconditions.checkNotNull(connectionDestroyEvent, "DestroyEvent");
+        this.callCreateEvent = Preconditions.checkNotNull(callCreateEvent, "CreateEvent");
+        this.callDestroyEvent = Preconditions.checkNotNull(callDestroyEvent, "DestroyEvent");
         this.sessionProvider = Preconditions.checkNotNull(sessionProvider, "SessionProvider");
         this.scope = Preconditions.checkNotNull(scope, "Scope");
         this.executor = Preconditions.checkNotNull(executor, "Executor");
@@ -142,27 +154,12 @@ final class LegacyHandler extends SimpleChannelHandler {
         final HttpSession httpSession = new LegacyHttpSessionAdapter(session);
         request.attachTo(httpSession);
         
-        registry.notify(IpcConnectionCreateEvent.class, new Procedure<IpcConnectionCreateEvent>() {
-            
-            @Override
-            public void apply(IpcConnectionCreateEvent input) {
-                input.eventIpcConnectionCreate(request);
-            }
-            
-        });
+        connectionCreateEvent.eventIpcConnectionCreate(request);
     }
     
     private Content call(final Call call) {
         try {
-            registry.notify(IpcCallCreateEvent.class, new Procedure<IpcCallCreateEvent>() {
-                
-                @Override
-                public void apply(IpcCallCreateEvent input) {
-                    input.eventIpcCallCreate(call);
-                }
-                
-            });
-            
+            callCreateEvent.eventIpcCallCreate(call);
             scope.enter(call);
             Scopes.setCurrentCall(call);
             
@@ -170,16 +167,7 @@ final class LegacyHandler extends SimpleChannelHandler {
         } finally {
             Scopes.clean();
             scope.exit();
-            
-            registry.notifySilent(IpcCallDestroyEvent.class, new Procedure<IpcCallDestroyEvent>() {
-                
-                @Override
-                public void apply(IpcCallDestroyEvent input) {
-                    input.eventIpcCallDestroy(call);
-                }
-                
-            });
-            
+            callDestroyEvent.eventIpcCallDestroy(call);
             call.clear();
         }
     }
@@ -190,16 +178,7 @@ final class LegacyHandler extends SimpleChannelHandler {
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {
                 final HttpRequest request = requests.remove(channel);
-                
-                registry.notifySilent(IpcConnectionDestroyEvent.class, new Procedure<IpcConnectionDestroyEvent>() {
-                    
-                    @Override
-                    public void apply(IpcConnectionDestroyEvent input) {
-                        input.eventIpcConnectionDestroy(request);
-                    }
-                    
-                });
-                
+                connectionDestroyEvent.eventIpcConnectionDestroy(request);
                 request.clear();
                 
             }
