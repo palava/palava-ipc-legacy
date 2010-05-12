@@ -219,7 +219,7 @@ final class LegacyReplayingDecoder extends ReplayingDecoder<Part> {
     }
     
     private void reset() {
-        setState(Part.TYPE);
+        checkpoint(Part.TYPE);
         type = null;
         name = null;
         sessionId = null;
