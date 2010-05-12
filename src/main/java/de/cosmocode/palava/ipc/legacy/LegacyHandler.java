@@ -178,21 +178,19 @@ final class LegacyHandler extends SimpleChannelHandler {
             
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {
-                channel.close().addListener(new ChannelFutureListener() {
-                    
-                    @Override
-                    public void operationComplete(ChannelFuture future) throws Exception {
-                        final HttpRequest request = requests.remove(channel);
-                        LOG.trace("Closing connection {}", request);
-                        connectionDestroyEvent.eventIpcConnectionDestroy(request);
-                        request.clear();
-                        
-                    }
-                    
-                });
+                channel.close();
             }
             
         });
+    }
+    
+    @Override
+    public void channelClosed(ChannelHandlerContext context, ChannelStateEvent event) throws Exception {
+        final Channel channel = event.getChannel();
+        final HttpRequest request = requests.remove(channel);
+        LOG.trace("Closing connection {}", request);
+        connectionDestroyEvent.eventIpcConnectionDestroy(request);
+        request.clear();
     }
     
     @Override
@@ -200,16 +198,6 @@ final class LegacyHandler extends SimpleChannelHandler {
         final Channel channel = event.getChannel();
         LOG.error("Uncaught exception", event.getCause());
         channel.close();
-    }
-    
-    @Override
-    public void channelClosed(ChannelHandlerContext context, ChannelStateEvent event) throws Exception {
-        final HttpRequest request = requests.get(event.getChannel());
-        if (request == null) {
-            return;
-        } else {
-            LOG.warn("Request {} was not closed properly", request);
-        }
     }
     
     /**

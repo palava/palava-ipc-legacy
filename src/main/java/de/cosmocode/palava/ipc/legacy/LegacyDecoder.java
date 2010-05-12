@@ -67,10 +67,13 @@ import de.cosmocode.palava.scope.AbstractScopeContext;
 @ThreadSafe
 final class LegacyDecoder extends OneToOneDecoder {
 
+    private static final Logger LOG = LoggerFactory.getLogger(LegacyDecoder.class);
+    
     @Override
     protected Object decode(ChannelHandlerContext context, Channel channel, Object message) throws Exception {
         if (message instanceof Header) {
             final Header header = Header.class.cast(message);
+            LOG.trace("Incoming call {}", header);
             switch (header.getCallType()) {
                 case OPEN: {
                     return new OpenCall(header);

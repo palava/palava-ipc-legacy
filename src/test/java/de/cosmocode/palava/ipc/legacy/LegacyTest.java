@@ -38,7 +38,7 @@ public final class LegacyTest {
     /**
      * Tests boot.
      */
-//    @Test
+    @Test
     public void boot() {
         final Framework framework = Palava.newFramework();
         framework.start();

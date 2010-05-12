@@ -1,3 +1,19 @@
+/**
+ * Copyright 2010 CosmoCode GmbH
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package de.cosmocode.palava.ipc.legacy;
 
 import java.nio.ByteBuffer;
@@ -52,7 +68,6 @@ final class LegacyReplayingDecoder extends ReplayingDecoder<Part> {
         switch (part) {
             case TYPE: {
                 type = readType(buffer);
-                LOG.trace("Read type '{}'", type);
                 checkpoint(Part.COLON);
                 // intended fall-through
             }
@@ -79,7 +94,6 @@ final class LegacyReplayingDecoder extends ReplayingDecoder<Part> {
             }
             case NAME: {
                 name = readName(buffer);
-                LOG.trace("Read name '{}'", name);
                 checkpoint(Part.THIRD_SLASH);
                 // intended fall-through
             }
@@ -92,7 +106,6 @@ final class LegacyReplayingDecoder extends ReplayingDecoder<Part> {
             }
             case SESSION_ID: {
                 sessionId = readSessionId(buffer);
-                LOG.trace("Read sessionId '{}'", sessionId);
                 checkpoint(Part.FOURTH_SLASH);
                 // intended fall-through
             }
@@ -130,7 +143,8 @@ final class LegacyReplayingDecoder extends ReplayingDecoder<Part> {
                 // intended fall-through
             }
             case CONTENT: {
-                return contentOf(buffer);
+                content = readContent(buffer);
+                return createHeader();
             }
             default: {
                 throw new AssertionError("Default case matched part " + part);
@@ -141,19 +155,34 @@ final class LegacyReplayingDecoder extends ReplayingDecoder<Part> {
     /* CHECKSTYLE:ON */
     
     private CallType readType(ChannelBuffer buffer) {
-        return CallType.valueOf(readUntil(buffer, ':').toUpperCase());
+        final CallType value = CallType.valueOf(readUntil(buffer, ':').toUpperCase());
+        LOG.trace("Read type '{}'", value);
+        return value;
     }
     
     private String readName(ChannelBuffer buffer) {
-        return readUntil(buffer, '/');
+        final String value = readUntil(buffer, '/');
+        LOG.trace("Read name '{}'", value);
+        return value;
     }
     
     private String readSessionId(ChannelBuffer buffer) {
-        return readUntil(buffer, '/');
+        final String value = readUntil(buffer, '/');
+        LOG.trace("Read sessionId '{}'", value);
+        return value;
     }
     
     private int readLength(ChannelBuffer buffer) {
-        return Integer.parseInt(readUntil(buffer, ')'));
+        final String value = readUntil(buffer, ')');
+        LOG.trace("Read length {}", value);
+        return Integer.parseInt(value);
+    }
+    
+    private ByteBuffer readContent(ChannelBuffer buffer) {
+        final ByteBuffer value = buffer.toByteBuffer(buffer.readerIndex(), length);
+        LOG.trace("Read content {}", value);
+        buffer.skipBytes(length);
+        return value;
     }
     
     private String readUntil(ChannelBuffer buffer, char c) {
@@ -167,11 +196,10 @@ final class LegacyReplayingDecoder extends ReplayingDecoder<Part> {
     }
     
     private String readAndIncrement(ChannelBuffer buffer, int currentIndex) {
-        try {
-            return buffer.toString(buffer.readerIndex(), currentIndex - buffer.readerIndex(), Charsets.UTF_8);
-        } finally {
-            buffer.readerIndex(currentIndex);
-        }
+        final int size = currentIndex - buffer.readerIndex();
+        final String value = buffer.toString(buffer.readerIndex(), size, Charsets.UTF_8);
+        buffer.readerIndex(currentIndex);
+        return value;
     }
 
     private void checkState(boolean state, String format, byte c) {
@@ -182,14 +210,12 @@ final class LegacyReplayingDecoder extends ReplayingDecoder<Part> {
         }
     }
     
-    private Header contentOf(ChannelBuffer buffer) {
-        content = buffer.toByteBuffer(buffer.readerIndex(), length);
-        LOG.trace("Setting content to {}", content);
-        buffer.skipBytes(length);
-        final Header header = InternalHeader.copyOf(this);
-        LOG.trace("Incoming call {}", header);
-        reset();
-        return header;
+    private Header createHeader() {
+        try {
+            return InternalHeader.copyOf(this);
+        } finally {
+            reset();
+        }
     }
     
     private void reset() {
@@ -209,7 +235,7 @@ final class LegacyReplayingDecoder extends ReplayingDecoder<Part> {
      */
     private static final class InternalHeader implements Header {
         
-        private final CallType callType;
+        private final CallType type;
         
         private final String name;
         
@@ -220,7 +246,7 @@ final class LegacyReplayingDecoder extends ReplayingDecoder<Part> {
         private final ByteBuffer content;
         
         private InternalHeader(LegacyReplayingDecoder decoder) {
-            this.callType = decoder.type;
+            this.type = decoder.type;
             this.name = decoder.name;
             this.sessionId = decoder.sessionId;
             this.length = decoder.length;
@@ -229,7 +255,7 @@ final class LegacyReplayingDecoder extends ReplayingDecoder<Part> {
         
         @Override
         public CallType getCallType() {
-            return callType;
+            return type;
         }
         
         @Override
@@ -255,7 +281,7 @@ final class LegacyReplayingDecoder extends ReplayingDecoder<Part> {
         @Override
         public String toString() {
             return String.format("Header [callType=%s, name=%s, sessionId=%s, contentLength=%s, content=%s]",
-                callType, getAliasedName(), getSessionId(), getContentLength(), getContent()
+                type, getAliasedName(), getSessionId(), getContentLength(), getContent()
             );
         }
         
