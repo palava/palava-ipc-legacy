@@ -148,9 +148,11 @@ final class LegacyFrameDecoder extends FrameDecoder {
                     case THIRD_SLASH: {
                         buffer.skipBytes(1);
                         part = Part.SESSION_ID;
+                        i--;
                         break;
                     }
                     case SESSION_ID: {
+                        // c == *second* char of sessionId
                         if (c == '/') {
                             sessionId = readAndIncrement(buffer, i);
                             LOG.trace("Setting sessionId to {}", sessionId);
