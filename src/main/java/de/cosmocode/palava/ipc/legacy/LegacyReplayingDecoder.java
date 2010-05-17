@@ -72,23 +72,20 @@ final class LegacyReplayingDecoder extends ReplayingDecoder<Part> {
                 // intended fall-through
             }
             case COLON: {
-                final byte c = buffer.getByte(buffer.readerIndex());
+                final byte c = buffer.readByte();
                 checkState(c == ':', "Expected : but was %s", c);
-                buffer.skipBytes(1);
                 checkpoint(Part.FIRST_SLASH);
                 // intended fall-through
             }
             case FIRST_SLASH: {
-                final byte c = buffer.getByte(buffer.readerIndex());
+                final byte c = buffer.readByte();
                 checkState(c == '/', "Expected first / but was %s", c);
-                buffer.skipBytes(1);
                 checkpoint(Part.SECOND_SLASH);
                 // intended fall-through
             }
             case SECOND_SLASH: {
-                final byte c = buffer.getByte(buffer.readerIndex());
+                final byte c = buffer.readByte();
                 checkState(c == '/', "Expected second / but was %s", c);
-                buffer.skipBytes(1);
                 checkpoint(Part.NAME);
                 // intended fall-through
             }
@@ -98,9 +95,8 @@ final class LegacyReplayingDecoder extends ReplayingDecoder<Part> {
                 // intended fall-through
             }
             case THIRD_SLASH: {
-                final byte c = buffer.getByte(buffer.readerIndex());
+                final byte c = buffer.readByte();
                 checkState(c == '/', "Expected third / but was %s", c);
-                buffer.skipBytes(1);
                 checkpoint(Part.SESSION_ID);
                 // intended fall-through
             }
@@ -110,16 +106,14 @@ final class LegacyReplayingDecoder extends ReplayingDecoder<Part> {
                 // intended fall-through
             }
             case FOURTH_SLASH: {
-                final byte c = buffer.getByte(buffer.readerIndex());
+                final byte c = buffer.readByte();
                 checkState(c == '/', "Expected fourth / but was %s", c);
-                buffer.skipBytes(1);
                 checkpoint(Part.LEFT_PARENTHESIS);
                 // intended fall-through
             }
             case LEFT_PARENTHESIS: {
-                final byte c = buffer.getByte(buffer.readerIndex());
+                final byte c = buffer.readByte();
                 checkState(c == '(', "Expected ( but was %s", c);
-                buffer.skipBytes(1);
                 checkpoint(Part.CONTENT_LENGTH);
                 // intended fall-through
             }
@@ -129,22 +123,22 @@ final class LegacyReplayingDecoder extends ReplayingDecoder<Part> {
                 // intended fall-through
             }
             case RIGHT_PARENTHESIS: {
-                final byte c = buffer.getByte(buffer.readerIndex());
+                final byte c = buffer.readByte();
                 checkState(c == ')', "Expected ) but was %s", c);
-                buffer.skipBytes(1);
                 checkpoint(Part.QUESTION_MARK);
                 // intended fall-through
             }
             case QUESTION_MARK: {
-                final byte c = buffer.getByte(buffer.readerIndex());
+                final byte c = buffer.readByte();
                 checkState(c == '?', "Expected ? but was %s", c);
-                buffer.skipBytes(1);
                 checkpoint(Part.CONTENT);
                 // intended fall-through
             }
             case CONTENT: {
                 content = readContent(buffer);
-                return createHeader();
+                final Header header = InternalHeader.copyOf(this);
+                checkpoint(Part.TYPE);
+                return header;
             }
             default: {
                 throw new AssertionError("Default case matched part " + part);
@@ -155,9 +149,9 @@ final class LegacyReplayingDecoder extends ReplayingDecoder<Part> {
     /* CHECKSTYLE:ON */
     
     private CallType readType(ChannelBuffer buffer) {
-        final CallType value = CallType.valueOf(readUntil(buffer, ':').toUpperCase());
+        final String value = readUntil(buffer, ':');
         LOG.trace("Read type '{}'", value);
-        return value;
+        return CallType.valueOf(value.toUpperCase());
     }
     
     private String readName(ChannelBuffer buffer) {
@@ -180,8 +174,8 @@ final class LegacyReplayingDecoder extends ReplayingDecoder<Part> {
     
     private ByteBuffer readContent(ChannelBuffer buffer) {
         final ByteBuffer value = buffer.toByteBuffer(buffer.readerIndex(), length);
-        LOG.trace("Read content {}", value);
         buffer.skipBytes(length);
+        LOG.trace("Read content {}", value);
         return value;
     }
     
@@ -210,27 +204,10 @@ final class LegacyReplayingDecoder extends ReplayingDecoder<Part> {
         }
     }
     
-    private Header createHeader() {
-        try {
-            return InternalHeader.copyOf(this);
-        } finally {
-            reset();
-        }
-    }
-    
-    private void reset() {
-        checkpoint(Part.TYPE);
-        type = null;
-        name = null;
-        sessionId = null;
-        length = 0;
-        content = null;
-    }
-    
     /**
      * Internal implementation of the {@link Header} interface.
      *
-     * @since 
+     * @since 1.0 
      * @author Willi Schoenborn
      */
     private static final class InternalHeader implements Header {
