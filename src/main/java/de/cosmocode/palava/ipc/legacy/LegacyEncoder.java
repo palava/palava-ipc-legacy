@@ -44,14 +44,14 @@ final class LegacyEncoder extends OneToOneEncoder {
     protected Object encode(ChannelHandlerContext context, Channel channel, Object message) throws Exception {
         if (message instanceof Content) {
             final Content content = Content.class.cast(message);
-            final String mimeType = content.getMimeType().toString();
             final int length = (int) content.getLength();
-
-            final byte[] header = String.format("%s://(%s)?", 
-                mimeType, Integer.toString(length)
+            final byte[] header = String.format("%s://(%s)?",
+                content.getMimeType(), Integer.toString(length)
             ).getBytes(Charsets.UTF_8);
             
-            final ChannelBuffer buffer = ChannelBuffers.dynamicBuffer(header.length + length);
+            final ChannelBuffer buffer = ChannelBuffers.dynamicBuffer(
+                header.length + length
+            );
             
             buffer.writeBytes(header);
             

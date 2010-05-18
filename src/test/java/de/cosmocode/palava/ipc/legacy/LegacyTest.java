@@ -16,16 +16,18 @@
 
 package de.cosmocode.palava.ipc.legacy;
 
+import java.io.IOException;
 import java.util.Map;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 import com.google.common.collect.Maps;
 
-import de.cosmocode.palava.bridge.call.CallType;
 import de.cosmocode.palava.core.Framework;
 import de.cosmocode.palava.core.Palava;
+import de.cosmocode.palava.ipc.IpcCommandExecutionException;
+import de.cosmocode.palava.ipc.client.IpcClient;
+import de.cosmocode.palava.ipc.client.IpcClientConnection;
 
 /**
  * Tests legacy boot, etc.
@@ -48,28 +50,25 @@ public final class LegacyTest {
 
     /**
      * Tests send.
+     * 
+     * @throws IOException should not happen
+     * @throws IpcCommandExecutionException should not happen 
      */
     @Test
-    public void send() {
+    public void send() throws IOException, IpcCommandExecutionException {
         final Framework framework = Palava.newFramework();
         framework.start();
         
-        final LegacyClient client = new LegacyNettyClient();
-        final LegacyClientConnection  connection = client.connect("localhost", 8081);
+        
+        final IpcClient client = new LegacySocketIpcClient();
+        final IpcClientConnection connection = client.connect("localhost", 8081);
         
         try {
-            connection.send(CallType.OPEN, "", "123", Maps.<String, Object>newHashMap());
-            
             final Map<String, Object> arguments = Maps.newHashMap();
-            arguments.put("class", getClass());
-            final String response = connection.send(CallType.JSON, Echo.class.getName(), "", arguments);
-            Assert.assertTrue(response.contains(getClass().getName()));
-            
-            connection.send(CallType.CLOSE, "", "", Maps.<String, Object>newHashMap());
-            
+            arguments.put("name", getClass().getName());
+            connection.execute(Echo.class, arguments);
         } finally {
             connection.disconnect();
-            client.shutdown();
             framework.stop();
         }
     }
