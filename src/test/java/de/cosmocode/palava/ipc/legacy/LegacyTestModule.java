@@ -30,7 +30,7 @@ import de.cosmocode.palava.ipc.IpcEventModule;
 import de.cosmocode.palava.ipc.IpcModule;
 import de.cosmocode.palava.ipc.command.localvm.LocalIpcCommandExecutorModule;
 import de.cosmocode.palava.ipc.netty.Boss;
-import de.cosmocode.palava.ipc.netty.NettyModule;
+import de.cosmocode.palava.ipc.netty.NettyServiceModule;
 import de.cosmocode.palava.ipc.netty.Worker;
 import de.cosmocode.palava.ipc.session.store.IpcSessionStore;
 import de.cosmocode.palava.ipc.session.store.StoreIpcSessionModule;
@@ -59,7 +59,7 @@ public final class LegacyTestModule implements Module {
         binder.install(new ExecutorModule(Worker.class, Worker.NAME));
         binder.install(new BackgroundSchedulerModule());
         binder.install(new IpcEventModule());
-        binder.install(new NettyModule());
+        binder.install(new NettyServiceModule());
         binder.install(new StoreIpcSessionModule());
         binder.install(new DefaultIpcCallFilterChainFactoryModule());
         binder.install(new MemoryStoreModule());
