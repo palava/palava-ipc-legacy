@@ -28,6 +28,7 @@ import de.cosmocode.palava.core.Palava;
 import de.cosmocode.palava.ipc.IpcCommandExecutionException;
 import de.cosmocode.palava.ipc.client.IpcClient;
 import de.cosmocode.palava.ipc.client.IpcClientConnection;
+import de.cosmocode.palava.ipc.legacy.client.LegacySocketIpcClient;
 
 /**
  * Tests legacy boot, etc.

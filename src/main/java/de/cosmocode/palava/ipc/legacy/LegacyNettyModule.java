@@ -44,11 +44,11 @@ public final class LegacyNettyModule implements Module {
     @Override
     public void configure(Binder binder) {
         // stateful decoders
-        binder.bind(LegacyReplayingDecoder.class).in(Scopes.NO_SCOPE);
+        binder.bind(LegacyFrameDecoder.class).in(Scopes.NO_SCOPE);
         
         // decoders/encoders
-        binder.bind(LegacyDecoder.class).in(Singleton.class);
-        binder.bind(LegacyEncoder.class).in(Singleton.class);
+        binder.bind(LegacyHeaderDecoder.class).in(Singleton.class);
+        binder.bind(LegacyContentEncoder.class).in(Singleton.class);
         binder.bind(LegacyHandler.class).in(Singleton.class);
 
         // legacy services
@@ -73,8 +73,8 @@ public final class LegacyNettyModule implements Module {
      * @return a new {@link ChannelPipeline}
      */
     @Provides
-    ChannelPipeline provideChannelPipeline(LegacyReplayingDecoder frameDecoder, LegacyDecoder decoder, 
-        LegacyEncoder encoder, LegacyHandler handler) {
+    ChannelPipeline provideChannelPipeline(LegacyFrameDecoder frameDecoder, LegacyHeaderDecoder decoder, 
+        LegacyContentEncoder encoder, LegacyHandler handler) {
         return Channels.pipeline(
             frameDecoder,
             decoder,

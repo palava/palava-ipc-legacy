@@ -40,9 +40,9 @@ import de.cosmocode.palava.bridge.call.CallType;
  * @author Willi Schoenborn
  */
 @NotThreadSafe
-final class LegacyReplayingDecoder extends ReplayingDecoder<Part> {
+final class LegacyFrameDecoder extends ReplayingDecoder<Part> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(LegacyReplayingDecoder.class);
+    private static final Logger LOG = LoggerFactory.getLogger(LegacyFrameDecoder.class);
     
     private CallType type;
     
@@ -54,7 +54,7 @@ final class LegacyReplayingDecoder extends ReplayingDecoder<Part> {
     
     private ByteBuffer content;
     
-    public LegacyReplayingDecoder() {
+    public LegacyFrameDecoder() {
         super(Part.TYPE);
     }
 
@@ -136,9 +136,8 @@ final class LegacyReplayingDecoder extends ReplayingDecoder<Part> {
             }
             case CONTENT: {
                 content = readContent(buffer);
-                final Header header = InternalHeader.copyOf(this);
                 checkpoint(Part.TYPE);
-                return header;
+                return InternalHeader.copyOf(this);
             }
             default: {
                 throw new AssertionError("Default case matched part " + part);
@@ -222,7 +221,7 @@ final class LegacyReplayingDecoder extends ReplayingDecoder<Part> {
         
         private final ByteBuffer content;
         
-        private InternalHeader(LegacyReplayingDecoder decoder) {
+        private InternalHeader(LegacyFrameDecoder decoder) {
             this.type = decoder.type;
             this.name = decoder.name;
             this.sessionId = decoder.sessionId;
@@ -262,7 +261,7 @@ final class LegacyReplayingDecoder extends ReplayingDecoder<Part> {
             );
         }
         
-        public static Header copyOf(LegacyReplayingDecoder decoder) {
+        public static Header copyOf(LegacyFrameDecoder decoder) {
             return new InternalHeader(decoder);
         }
         

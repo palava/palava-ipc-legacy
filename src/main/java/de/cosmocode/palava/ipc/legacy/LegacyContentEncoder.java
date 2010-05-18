@@ -38,7 +38,7 @@ import de.cosmocode.palava.ipc.netty.ChannelBuffering;
  */
 @Sharable
 @ThreadSafe
-final class LegacyEncoder extends OneToOneEncoder {
+final class LegacyContentEncoder extends OneToOneEncoder {
 
     @Override
     protected Object encode(ChannelHandlerContext context, Channel channel, Object message) throws Exception {

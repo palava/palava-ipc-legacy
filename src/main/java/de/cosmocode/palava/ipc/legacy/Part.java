@@ -17,7 +17,7 @@
 package de.cosmocode.palava.ipc.legacy;
 
 /**
- * Identifies the different parts of the protocol structure.
+ * Identifies the different parts of the incoming server protocol structure.
  *
  * @author Willi Schoenborn
  */

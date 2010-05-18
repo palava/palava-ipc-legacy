@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package de.cosmocode.palava.ipc.legacy;
+package de.cosmocode.palava.ipc.legacy.client;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -119,7 +119,7 @@ public final class LegacySocketIpcClient extends SocketIpcClient {
 
             private final InputStream stream;
             
-            private Part part = Part.TYPE;
+            private Part part = Part.MIME_TYPE;
             
             public ExecutionTask(InputStream stream) {
                 this.stream = stream;
@@ -135,7 +135,7 @@ public final class LegacySocketIpcClient extends SocketIpcClient {
                     final byte c = read();
                     buffer.writeByte(c);
                     switch (part) {
-                        case TYPE: {
+                        case MIME_TYPE: {
                             if (c == ':') {
                                 final String type = buffer.toString(
                                     buffer.readerIndex(), buffer.readableBytes() - 1, Charsets.UTF_8

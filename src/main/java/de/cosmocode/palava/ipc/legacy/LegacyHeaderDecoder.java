@@ -65,9 +65,9 @@ import de.cosmocode.palava.scope.AbstractScopeContext;
  */
 @Sharable
 @ThreadSafe
-final class LegacyDecoder extends OneToOneDecoder {
+final class LegacyHeaderDecoder extends OneToOneDecoder {
 
-    private static final Logger LOG = LoggerFactory.getLogger(LegacyDecoder.class);
+    private static final Logger LOG = LoggerFactory.getLogger(LegacyHeaderDecoder.class);
     
     @Override
     protected Object decode(ChannelHandlerContext context, Channel channel, Object message) throws Exception {
