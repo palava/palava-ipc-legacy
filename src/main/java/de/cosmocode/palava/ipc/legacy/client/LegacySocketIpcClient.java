@@ -60,6 +60,7 @@ public final class LegacySocketIpcClient extends SocketIpcClient {
         
         };
     
+    // FIXME dependency
     private final ObjectMapper mapper = new ObjectMapper();
     
     private final ExecutorService executor = Executors.newCachedThreadPool();
