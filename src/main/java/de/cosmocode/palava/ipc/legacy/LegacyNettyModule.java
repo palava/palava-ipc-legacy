@@ -32,6 +32,9 @@ import de.cosmocode.palava.bridge.Header;
 import de.cosmocode.palava.bridge.Server;
 import de.cosmocode.palava.bridge.ServiceManager;
 import de.cosmocode.palava.bridge.command.Alias;
+import de.cosmocode.palava.bridge.session.HttpSession;
+import de.cosmocode.palava.ipc.IpcSession;
+import de.cosmocode.palava.ipc.IpcSessionScoped;
 
 /**
  * Binds all legacy decoders.
@@ -101,6 +104,19 @@ public final class LegacyNettyModule implements Module {
             }
             
         };
+    }
+    
+    /**
+     * Provides the current http session.
+     * 
+     * @since 1.0
+     * @param session the underlying ipc session
+     * @return a new {@link HttpSession}
+     */
+    @Provides
+    @IpcSessionScoped
+    HttpSession provideHttpSession(final IpcSession session) {
+        return new LegacyHttpSessionAdapter(session);
     }
 
 }
