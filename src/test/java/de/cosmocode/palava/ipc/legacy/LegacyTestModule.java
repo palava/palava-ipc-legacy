@@ -16,7 +16,10 @@
 
 package de.cosmocode.palava.ipc.legacy;
 
+import org.jboss.netty.channel.ChannelPipeline;
+
 import com.google.inject.Binder;
+import com.google.inject.Key;
 import com.google.inject.Module;
 
 import de.cosmocode.palava.concurrent.BackgroundSchedulerModule;
@@ -30,6 +33,7 @@ import de.cosmocode.palava.ipc.IpcEventModule;
 import de.cosmocode.palava.ipc.IpcModule;
 import de.cosmocode.palava.ipc.command.localvm.LocalIpcCommandExecutorModule;
 import de.cosmocode.palava.ipc.netty.Boss;
+import de.cosmocode.palava.ipc.netty.ChannelPipelineFactoryModule;
 import de.cosmocode.palava.ipc.netty.NettyServiceModule;
 import de.cosmocode.palava.ipc.netty.Worker;
 import de.cosmocode.palava.ipc.session.store.IpcSessionStore;
@@ -65,6 +69,8 @@ public final class LegacyTestModule implements Module {
         binder.install(new MemoryStoreModule());
         binder.bind(Store.class).annotatedWith(IpcSessionStore.class).to(Store.class);
         binder.install(new LegacyNettyModule());
+        binder.install(new ChannelPipelineFactoryModule());
+        binder.bind(ChannelPipeline.class).to(Key.get(ChannelPipeline.class, Legacy.class));
     }
 
 }

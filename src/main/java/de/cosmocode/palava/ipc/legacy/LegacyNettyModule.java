@@ -17,12 +17,10 @@
 package de.cosmocode.palava.ipc.legacy;
 
 import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;
 
 import com.google.inject.Binder;
 import com.google.inject.Module;
-import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
@@ -76,6 +74,7 @@ public final class LegacyNettyModule implements Module {
      * @return a new {@link ChannelPipeline}
      */
     @Provides
+    @Legacy
     ChannelPipeline provideChannelPipeline(LegacyFrameDecoder frameDecoder, LegacyHeaderDecoder decoder, 
         LegacyContentEncoder encoder, LegacyHandler handler) {
         return Channels.pipeline(
@@ -84,26 +83,6 @@ public final class LegacyNettyModule implements Module {
             encoder,
             handler
         );
-    }
-    
-    /**
-     * Provides a channel pipeline factory producing new channel pipelines.
-     * 
-     * @since 1.0
-     * @param provider the backing provider for {@link ChannelPipeline}s
-     * @return a new new {@link ChannelPipelineFactory}
-     */
-    @Provides
-    @Singleton
-    ChannelPipelineFactory provideChannelPipelineFactory(final Provider<ChannelPipeline> provider) {
-        return new ChannelPipelineFactory() {
-            
-            @Override
-            public ChannelPipeline getPipeline() throws Exception {
-                return provider.get();
-            }
-            
-        };
     }
     
     /**
