@@ -188,8 +188,6 @@ final class LegacyHttpSessionAdapter implements HttpSession {
             key("data").object();
         
         for (Entry<Object, Object> entry : session) {
-            // prevent stack overflow when this adapter is scoped in the underlying session
-            if (entry.getValue() == this) continue;
             renderer.key(entry.getKey()).value(entry.getValue());
         }
         
