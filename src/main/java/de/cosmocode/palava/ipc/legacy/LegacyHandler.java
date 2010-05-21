@@ -167,8 +167,8 @@ final class LegacyHandler extends SimpleChannelHandler {
             return executor.execute(call);
         } finally {
             Scopes.clean();
-            scope.exit();
             callDestroyEvent.eventIpcCallDestroy(call);
+            scope.exit();
         }
     }
     
