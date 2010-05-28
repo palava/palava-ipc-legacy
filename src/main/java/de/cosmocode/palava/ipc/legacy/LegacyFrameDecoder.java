@@ -174,8 +174,6 @@ final class LegacyFrameDecoder extends ReplayingDecoder<Part> {
     
     private ByteBuffer readContent(ChannelBuffer buffer) {
         final ByteBuffer value = buffer.readSlice(length).toByteBuffer(0, length);
-//        final ByteBuffer value = buffer.toByteBuffers(buffer.readerIndex(), length)[0];
-//        buffer.skipBytes(length);
         LOG.trace("Read content {}", value);
         return value;
     }
