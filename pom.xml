@@ -32,7 +32,7 @@
 		<dependency>
 			<groupId>de.cosmocode.palava</groupId>
 			<artifactId>palava-ipc-client</artifactId>
-			<version>[1.0,2)</version>
+			<version>[1.0-SNAPSHOT,2)</version>
 		</dependency>
 		<dependency>
 			<groupId>de.cosmocode.palava</groupId>
@@ -72,8 +72,8 @@
 		</dependency>
 		<dependency>
 			<groupId>de.cosmocode.palava</groupId>
-			<artifactId>palava-ipc-command-localvm</artifactId>
-			<version>[1.2,2)</version>
+			<artifactId>palava-ipc-execvm</artifactId>
+			<version>[1.1-SNAPSHOT,2)</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
