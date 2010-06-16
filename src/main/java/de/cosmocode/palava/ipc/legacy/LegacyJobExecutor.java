@@ -67,7 +67,7 @@ final class LegacyJobExecutor implements JobExecutor {
      *
      * @author Willi Schoenborn
      */
-    private final class InternalResponse implements Response {
+    private static final class InternalResponse implements Response {
 
         private Content content;
 
