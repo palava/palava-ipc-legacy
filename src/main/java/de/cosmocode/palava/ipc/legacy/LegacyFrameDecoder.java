@@ -17,6 +17,7 @@
 package de.cosmocode.palava.ipc.legacy;
 
 import java.nio.ByteBuffer;
+import java.util.Locale;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
@@ -34,7 +35,7 @@ import de.cosmocode.palava.bridge.call.CallType;
 
 /**
  * Legacy {@link ReplayingDecoder} to support the legacy php protocol which looks like:<br />
- * {@code <type>://<aliasedName>/<sessionId>/(<contentLength>)?<content>}.
+ * {@code <type>://<name>/<sessionId>/(<length>)?<content>}.
  *
  * @since 1.0
  * @author Willi Schoenborn
@@ -62,7 +63,7 @@ final class LegacyFrameDecoder extends ReplayingDecoder<Part> {
     // Fall-throughs are the fastest way here
     /* CHECKSTYLE:OFF */
     @Override
-    protected Object decode(ChannelHandlerContext context, Channel channel, 
+    protected Header decode(ChannelHandlerContext context, Channel channel, 
         ChannelBuffer buffer, Part part) throws Exception {
         
         switch (part) {
@@ -150,7 +151,7 @@ final class LegacyFrameDecoder extends ReplayingDecoder<Part> {
     private CallType readType(ChannelBuffer buffer) {
         final String value = readUntil(buffer, ':');
         LOG.trace("Read type '{}'", value);
-        return CallType.valueOf(value.toUpperCase());
+        return CallType.valueOf(value.toUpperCase(Locale.ENGLISH));
     }
     
     private String readName(ChannelBuffer buffer) {
@@ -173,6 +174,9 @@ final class LegacyFrameDecoder extends ReplayingDecoder<Part> {
     
     private ByteBuffer readContent(ChannelBuffer buffer) {
         // workaround for https://jira.jboss.org/browse/NETTY-320
+        // this should be
+        // final ByteBuffer value = buffer.toByteBuffer(0, length);
+        // buffer.skipBytes(length);
         final ByteBuffer value = buffer.readSlice(length).toByteBuffer(0, length);
         LOG.trace("Read content {}", value);
         return value;
