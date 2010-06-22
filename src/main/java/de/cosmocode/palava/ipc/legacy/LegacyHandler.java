@@ -26,7 +26,6 @@ import java.util.concurrent.ConcurrentMap;
 import javax.annotation.concurrent.ThreadSafe;
 
 import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelStateEvent;
@@ -173,14 +172,7 @@ final class LegacyHandler extends SimpleChannelHandler {
     }
     
     private void close(final Channel channel) {
-        channel.write(JsonContent.EMPTY).addListener(new ChannelFutureListener() {
-            
-            @Override
-            public void operationComplete(ChannelFuture future) throws Exception {
-                channel.close();
-            }
-            
-        });
+        channel.write(JsonContent.EMPTY).addListener(ChannelFutureListener.CLOSE);
     }
     
     @Override

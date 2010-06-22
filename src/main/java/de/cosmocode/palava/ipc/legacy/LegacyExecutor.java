@@ -66,10 +66,10 @@ final class LegacyExecutor implements Executor {
     
     @Override
     public Content execute(Call call) {
-        final String name = call.getHeader().getAliasedName();
-        final Object raw = cache.load(name);
-
         try {
+            final String name = call.getHeader().getAliasedName();
+            final Object raw = cache.load(name);
+            
             if (raw instanceof IpcCommand) {
                 LOG.trace("Executing ipc command {}", raw);
                 final Map<String, Object> result = ipcCommandExecutor.execute(raw.getClass().getName(), call);
