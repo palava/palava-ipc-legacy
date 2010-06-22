@@ -135,7 +135,6 @@ final class LegacyFrameDecoder extends ReplayingDecoder<Part> {
                 // intended fall-through
             }
             case CONTENT: {
-                // FIXME
                 content = readContent(buffer);
                 checkpoint(Part.TYPE);
                 return InternalHeader.copyOf(this);
@@ -173,6 +172,7 @@ final class LegacyFrameDecoder extends ReplayingDecoder<Part> {
     }
     
     private ByteBuffer readContent(ChannelBuffer buffer) {
+        // FIXME workaround for https://jira.jboss.org/browse/NETTY-320
         final ByteBuffer value = buffer.readSlice(length).toByteBuffer(0, length);
         LOG.trace("Read content {}", value);
         return value;
