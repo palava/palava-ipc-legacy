@@ -38,6 +38,14 @@ public interface DetachedHttpRequest extends HttpRequest {
     void attachTo(HttpSession session);
     
     /**
+     * Checks whether this request is already attached to a session.
+     * 
+     * @since 1.1
+     * @return true if this request is attached to a session, false otherwise
+     */
+    boolean isAttached();
+    
+    /**
      * {@inheritDoc}
      * @throws IllegalStateException if this request is not yet attached to a session
      */

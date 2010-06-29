@@ -149,10 +149,12 @@ final class LegacyHandler extends SimpleChannelHandler {
         request.setRequestUri(arguments.getString(REQUEST_URI, null));
         request.setUserAgent(arguments.getString(HTTP_USER_AGENT, null));
         
-        final String sessionId = call.getHeader().getSessionId();
-        final IpcSession session = sessionProvider.getSession(sessionId, remoteAddress);
-        final HttpSession httpSession = new LegacyHttpSessionAdapter(session);
-        request.attachTo(httpSession);
+        if (!request.isAttached()) {
+            final String sessionId = call.getHeader().getSessionId();
+            final IpcSession session = sessionProvider.getSession(sessionId, remoteAddress);
+            final HttpSession httpSession = new LegacyHttpSessionAdapter(session);
+            request.attachTo(httpSession);
+        }
         
         connectionCreateEvent.eventIpcConnectionCreate(request);
         channel.write(JsonContent.EMPTY);
@@ -233,6 +235,11 @@ final class LegacyHandler extends SimpleChannelHandler {
         @Override
         public void attachTo(HttpSession s) {
             this.session = Preconditions.checkNotNull(s, "Session");
+        }
+        
+        @Override
+        public boolean isAttached() {
+            return session != null;
         }
 
         @Override
