@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.MapMaker;
 import com.google.common.collect.Maps;
 import com.google.gag.annotation.disclaimer.LegacySucks;
@@ -157,7 +158,7 @@ final class LegacyHandler extends SimpleChannelHandler {
         }
         
         connectionCreateEvent.eventIpcConnectionCreate(request);
-        channel.write(JsonContent.EMPTY);
+        channel.write(new JsonContent(ImmutableMap.of("sessionId", request.getSession().getSessionId())));
     }
     
     private Content call(final Call call) {
