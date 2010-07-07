@@ -230,7 +230,11 @@ final class LegacyHandler extends SimpleChannelHandler {
         
         @Override
         public IpcSession getSession() {
-            return getHttpSession();
+            if (getHttpSession() instanceof LegacyHttpSessionAdapter) {
+                return LegacyHttpSessionAdapter.class.cast(session).getSession();
+            } else {
+                return session;
+            }
         }
         
         @Override

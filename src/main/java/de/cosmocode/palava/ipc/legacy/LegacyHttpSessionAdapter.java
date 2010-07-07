@@ -196,5 +196,9 @@ final class LegacyHttpSessionAdapter implements HttpSession {
         
         return renderer;
     }
+    
+    public IpcSession getSession() {
+        return session;
+    }
 
 }
