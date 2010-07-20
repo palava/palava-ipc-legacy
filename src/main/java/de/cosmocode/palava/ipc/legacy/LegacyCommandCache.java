@@ -22,7 +22,7 @@ import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 
-import de.cosmocode.commons.reflect.Classes;
+import de.cosmocode.commons.reflect.Reflection;
 import de.cosmocode.palava.bridge.command.Alias;
 
 /**
@@ -62,7 +62,7 @@ final class LegacyCommandCache implements CommandCache {
     
     private Class<?> forName(String name) {
         try {
-            return Classes.forName(name);
+            return Reflection.forName(name);
         } catch (ClassNotFoundException e) {
             throw new IllegalArgumentException(e);
         }
