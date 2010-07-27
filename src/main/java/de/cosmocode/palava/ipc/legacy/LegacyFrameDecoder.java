@@ -173,11 +173,8 @@ final class LegacyFrameDecoder extends ReplayingDecoder<Part> {
     }
     
     private ByteBuffer readContent(ChannelBuffer buffer) {
-        // workaround for https://jira.jboss.org/browse/NETTY-320
-        // this should be
-        // final ByteBuffer value = buffer.toByteBuffer(0, length);
-        // buffer.skipBytes(length);
-        final ByteBuffer value = buffer.readSlice(length).toByteBuffer(0, length);
+        final ByteBuffer value = buffer.toByteBuffer(0, length);
+        buffer.skipBytes(length);
         LOG.trace("Read content {}", value);
         return value;
     }
