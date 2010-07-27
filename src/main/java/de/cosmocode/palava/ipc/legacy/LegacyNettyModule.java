@@ -51,12 +51,18 @@ public final class LegacyNettyModule implements Module {
         binder.bind(LegacyContentEncoder.class).in(Singleton.class);
         binder.bind(LegacyHandler.class).in(Singleton.class);
 
-        // legacy services
-        binder.bind(CommandCache.class).to(LegacyCommandCache.class).in(Singleton.class);
+        // empty set of aliases
         Multibinder.newSetBinder(binder, Alias.class);
+        
+        // cache used by executors
+        binder.bind(CommandCache.class).to(LegacyCommandCache.class).in(Singleton.class);
+        
+        // executors
         binder.bind(Executor.class).to(LegacyExecutor.class).in(Singleton.class);
         binder.bind(JobExecutor.class).to(LegacyJobExecutor.class).in(Singleton.class);
         binder.bind(CommandExecutor.class).to(LegacyCommandExecutor.class).in(Singleton.class);
+        
+        // server
         binder.bind(LegacyServer.class).in(Singleton.class);
         binder.bind(Server.class).to(LegacyServer.class).in(Singleton.class);
         binder.bind(ServiceManager.class).to(LegacyServer.class).in(Singleton.class);
@@ -76,12 +82,7 @@ public final class LegacyNettyModule implements Module {
     @Legacy
     ChannelPipeline provideChannelPipeline(LegacyFrameDecoder frameDecoder, LegacyHeaderDecoder decoder, 
         LegacyContentEncoder encoder, LegacyHandler handler) {
-        return Channels.pipeline(
-            frameDecoder,
-            decoder,
-            encoder,
-            handler
-        );
+        return Channels.pipeline(frameDecoder, decoder, encoder, handler);
     }
     
     /**
@@ -92,7 +93,7 @@ public final class LegacyNettyModule implements Module {
      * @return a new {@link HttpSession}
      */
     @Provides
-    HttpSession provideHttpSession(final IpcSession session) {
+    HttpSession provideHttpSession(IpcSession session) {
         return new LegacyHttpSessionAdapter(session);
     }
 
