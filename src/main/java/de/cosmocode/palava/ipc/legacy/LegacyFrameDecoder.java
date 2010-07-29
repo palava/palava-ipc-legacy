@@ -17,7 +17,6 @@
 package de.cosmocode.palava.ipc.legacy;
 
 import java.nio.ByteBuffer;
-import java.util.Locale;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
@@ -151,7 +150,12 @@ final class LegacyFrameDecoder extends ReplayingDecoder<Part> {
     private CallType readType(ChannelBuffer buffer) {
         final String value = readUntil(buffer, ':');
         LOG.trace("Read type '{}'", value);
-        return CallType.valueOf(value.toUpperCase(Locale.ENGLISH));
+        try {
+            return CallType.valueOf(value.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            LOG.debug("Current buffer state: {}", buffer.toString(Charsets.UTF_8));
+            throw e;
+        }
     }
     
     private String readName(ChannelBuffer buffer) {
@@ -173,7 +177,7 @@ final class LegacyFrameDecoder extends ReplayingDecoder<Part> {
     }
     
     private ByteBuffer readContent(ChannelBuffer buffer) {
-        final ByteBuffer value = buffer.toByteBuffer(0, length);
+        final ByteBuffer value = buffer.toByteBuffer(buffer.readerIndex(), length);
         buffer.skipBytes(length);
         LOG.trace("Read content {}", value);
         return value;
