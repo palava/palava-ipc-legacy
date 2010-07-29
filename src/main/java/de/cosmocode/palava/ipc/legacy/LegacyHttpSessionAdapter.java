@@ -29,9 +29,12 @@ import org.apache.commons.lang.StringUtils;
 
 import com.google.common.base.Preconditions;
 
-import de.cosmocode.json.JSONRenderer;
 import de.cosmocode.palava.bridge.session.HttpSession;
 import de.cosmocode.palava.ipc.IpcSession;
+import de.cosmocode.rendering.Renderer;
+import de.cosmocode.rendering.RenderingException;
+import de.cosmocode.rendering.RenderingLevel;
+import de.cosmocode.rendering.ValueRenderer;
 
 /**
  * Adapter for {@link IpcSession} to {@link HttpSession}.
@@ -181,20 +184,31 @@ final class LegacyHttpSessionAdapter implements HttpSession {
     }
 
     @Override
-    public JSONRenderer renderAsMap(JSONRenderer renderer) {
+    public void render(Renderer renderer, RenderingLevel level) throws RenderingException {
         renderer.
             key("id").value(getSessionId()).
             key("accesstime").value(lastAccessTime()).
-            key("data").object();
+            key("data").value(session, SessionValueRenderer.INSTANCE);
+    }
+    
+    /**
+     * Simple {@link ValueRenderer}  for {@link IpcSession}.
+     *
+     * @author Willi Schoenborn
+     */
+    private enum SessionValueRenderer implements ValueRenderer<IpcSession> {
         
-        for (Entry<Object, Object> entry : session) {
-            renderer.key(entry.getKey()).value(entry.getValue());
+        INSTANCE;
+        
+        @Override
+        public void render(IpcSession value, Renderer renderer) throws RenderingException {
+            renderer.map();
+            for (Entry<Object, Object> entry : value) {
+                renderer.key(entry.getKey()).value(entry.getValue());
+            }
+            renderer.endMap();
         }
         
-        renderer.
-            endObject();
-        
-        return renderer;
     }
     
     public IpcSession getSession() {
