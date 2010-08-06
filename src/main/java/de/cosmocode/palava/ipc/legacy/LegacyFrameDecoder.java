@@ -153,7 +153,7 @@ final class LegacyFrameDecoder extends ReplayingDecoder<Part> {
         try {
             return CallType.valueOf(value.toUpperCase());
         } catch (IllegalArgumentException e) {
-            LOG.debug("Current buffer state: {}", buffer.toString(Charsets.UTF_8));
+            LOG.error("Illegal call type, current buffer state: {}", buffer.toString(Charsets.UTF_8));
             throw e;
         }
     }
