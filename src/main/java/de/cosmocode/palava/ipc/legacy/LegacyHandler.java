@@ -59,6 +59,7 @@ import de.cosmocode.palava.ipc.IpcCallScope;
 import de.cosmocode.palava.ipc.IpcConnectionCreateEvent;
 import de.cosmocode.palava.ipc.IpcConnectionDestroyEvent;
 import de.cosmocode.palava.ipc.IpcSession;
+import de.cosmocode.palava.ipc.IpcSessionNotAttachedException;
 import de.cosmocode.palava.ipc.IpcSessionProvider;
 import de.cosmocode.palava.scope.AbstractScopeContext;
 
@@ -181,7 +182,7 @@ final class LegacyHandler extends SimpleChannelHandler {
     @Override
     public void channelClosed(ChannelHandlerContext context, ChannelStateEvent event) throws Exception {
         final Channel channel = event.getChannel();
-        final HttpRequest request = requests.remove(channel);
+        final DetachedHttpRequest request = requests.remove(channel);
         LOG.trace("Closing connection {}", request);
         connectionDestroyEvent.eventIpcConnectionDestroy(request);
         request.clear();
@@ -224,8 +225,11 @@ final class LegacyHandler extends SimpleChannelHandler {
 
         @Override
         public HttpSession getHttpSession() {
-            Preconditions.checkState(session != null, "Not yet attached to a session");
-            return session;
+            if (session == null) {
+                throw new IpcSessionNotAttachedException();
+            } else {
+                return session;
+            }
         }
         
         @Override
