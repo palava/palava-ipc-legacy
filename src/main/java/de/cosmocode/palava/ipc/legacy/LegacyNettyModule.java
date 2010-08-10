@@ -60,7 +60,6 @@ public final class LegacyNettyModule implements Module {
         // executors
         binder.bind(Executor.class).to(LegacyExecutor.class).in(Singleton.class);
         binder.bind(JobExecutor.class).to(LegacyJobExecutor.class).in(Singleton.class);
-        binder.bind(CommandExecutor.class).to(LegacyCommandExecutor.class).in(Singleton.class);
         
         // server
         binder.bind(LegacyServer.class).in(Singleton.class);

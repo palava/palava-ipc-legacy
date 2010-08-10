@@ -27,7 +27,6 @@ import com.google.inject.Inject;
 
 import de.cosmocode.palava.bridge.Content;
 import de.cosmocode.palava.bridge.call.Call;
-import de.cosmocode.palava.bridge.command.Command;
 import de.cosmocode.palava.bridge.command.Job;
 import de.cosmocode.palava.bridge.content.ErrorContent;
 import de.cosmocode.palava.bridge.content.JsonContent;
@@ -51,16 +50,13 @@ final class LegacyExecutor implements Executor {
     
     private final JobExecutor jobExecutor;
     
-    private final CommandExecutor commandExecutor;
-
     private final CommandCache cache;
     
     @Inject
     public LegacyExecutor(IpcCommandExecutor ipcCommandExecutor, JobExecutor jobExecutor, 
-        CommandExecutor commandExecutor, CommandCache cache) {
+        CommandCache cache) {
         this.ipcCommandExecutor = Preconditions.checkNotNull(ipcCommandExecutor, "IpcCommandExecutor");
         this.jobExecutor = Preconditions.checkNotNull(jobExecutor, "JobExecutor");
-        this.commandExecutor = Preconditions.checkNotNull(commandExecutor, "CommandExecutor");
         this.cache = Preconditions.checkNotNull(cache, "Cache");
     }
     
@@ -78,10 +74,6 @@ final class LegacyExecutor implements Executor {
                 final Job job = Job.class.cast(raw);
                 LOG.trace("Processing job {}", job);
                 return jobExecutor.execute(job, call);
-            } else if (raw instanceof Command) {
-                final Command command = Command.class.cast(raw);
-                LOG.trace("Executing command {}", command);
-                return commandExecutor.execute(command, call);
             } else {
                 throw new IllegalArgumentException("Unknown class " + raw);
             }
