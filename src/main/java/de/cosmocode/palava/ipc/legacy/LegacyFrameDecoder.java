@@ -155,7 +155,13 @@ final class LegacyFrameDecoder extends ReplayingDecoder<Part> {
     private CallType readType(ChannelBuffer buffer) {
         final String value = readUntil(buffer, ':');
         LOG.trace("Read type '{}'", value);
-        return CallType.valueOf(value.toUpperCase());
+        try {
+            return CallType.valueOf(value.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            final String state = buffer.toString(0, buffer.writerIndex(), Charsets.UTF_8);
+            LOG.error("Illegal call type, current buffer state: '{}'", state);
+            throw e;
+        }
     }
     
     private String readName(ChannelBuffer buffer) {
