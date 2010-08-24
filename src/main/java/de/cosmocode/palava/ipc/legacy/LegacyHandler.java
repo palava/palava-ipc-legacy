@@ -16,10 +16,6 @@
 
 package de.cosmocode.palava.ipc.legacy;
 
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
@@ -252,12 +248,8 @@ final class LegacyHandler extends SimpleChannelHandler {
         }
 
         @Override
-        public URL getReferer() {
-            try {
-                return referer == null ? null : new URL(referer);
-            } catch (MalformedURLException e) {
-                throw new IllegalArgumentException(referer);
-            }
+        public String getReferer() {
+            return referer;
         }
         
         void setReferer(String referer) {
@@ -274,12 +266,8 @@ final class LegacyHandler extends SimpleChannelHandler {
         }
 
         @Override
-        public URI getRequestUri() {
-            try {
-                return requestUri == null ? null : new URI(requestUri);
-            } catch (URISyntaxException e) {
-                throw new IllegalArgumentException(requestUri);
-            }
+        public String getRequestUri() {
+            return requestUri;
         }
 
         void setRequestUri(String requestUri) {
