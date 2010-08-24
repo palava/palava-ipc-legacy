@@ -21,6 +21,7 @@ import com.google.inject.Inject;
 
 import de.cosmocode.palava.bridge.request.HttpRequest;
 import de.cosmocode.palava.ipc.Browser;
+import de.cosmocode.palava.ipc.Current;
 
 /**
  * Legacy {@link Browser} implementation.
@@ -33,7 +34,7 @@ final class LegacyBrowser implements Browser {
     private final HttpRequest request;
     
     @Inject
-    public LegacyBrowser(HttpRequest request) {
+    public LegacyBrowser(@Current HttpRequest request) {
         this.request = Preconditions.checkNotNull(request, "Request");
     }
 
