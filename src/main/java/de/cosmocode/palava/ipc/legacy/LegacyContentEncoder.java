@@ -31,7 +31,7 @@ import com.google.common.base.Charsets;
 import de.cosmocode.palava.bridge.Content;
 
 /**
- * An encoder which encodes {@link Content} to {@link ChannelBuffer} into the following form:
+ * An encoder which encodes {@link Content} to {@link ChannelBuffer} into the following form.
  * 
  * <p>
  *   {@code mimeType://(contentLength)?content}
