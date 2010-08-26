@@ -11,7 +11,7 @@
   <name>Palava IPC Legacy</name>
   <version>1.0-SNAPSHOT</version>
   <scm>
-    <developerConnection>https://palava.svn.cosmocode.de/palava-ipc-legacy/trunk</developerConnection>
+    <developerConnection>scm:svn:https://palava.svn.cosmocode.de/palava-ipc-legacy/trunk</developerConnection>
   </scm>
   <repositories>
     <repository>
