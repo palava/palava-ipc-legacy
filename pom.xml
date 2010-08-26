@@ -1,5 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <artifactId>palava-parent</artifactId>
@@ -9,9 +8,9 @@
   <groupId>de.cosmocode.palava</groupId>
   <artifactId>palava-ipc-legacy</artifactId>
   <name>Palava IPC Legacy</name>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0.0</version>
   <scm>
-    <developerConnection>scm:svn:https://palava.svn.cosmocode.de/palava-ipc-legacy/trunk</developerConnection>
+    <developerConnection>scm:svn:https://palava.svn.cosmocode.de/palava-ipc-legacy/tags/1.0.0</developerConnection>
   </scm>
   <repositories>
     <repository>
