@@ -8,9 +8,9 @@
   <groupId>de.cosmocode.palava</groupId>
   <artifactId>palava-ipc-legacy</artifactId>
   <name>Palava IPC Legacy</name>
-  <version>1.1-SNAPSHOT</version>
+  <version>1.0.1</version>
   <scm>
-    <developerConnection>scm:svn:https://palava.svn.cosmocode.de/palava-ipc-legacy/trunk</developerConnection>
+    <developerConnection>scm:svn:https://palava.svn.cosmocode.de/palava-ipc-legacy/tags/1.0.1</developerConnection>
   </scm>
   <repositories>
     <repository>
