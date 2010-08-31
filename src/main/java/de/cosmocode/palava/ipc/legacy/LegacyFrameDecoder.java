@@ -67,12 +67,7 @@ final class LegacyFrameDecoder extends ReplayingDecoder<Part> {
         
         switch (part) {
             case TYPE: {
-                try {
-                    type = readType(buffer);
-                } catch (IllegalArgumentException e) {
-                    LOG.error("Illegal call type from {}", channel.getRemoteAddress());
-                    throw e;
-                }
+                type = readType(buffer);
                 checkpoint(Part.COLON);
                 // intended fall-through
             }
@@ -159,7 +154,7 @@ final class LegacyFrameDecoder extends ReplayingDecoder<Part> {
             return CallType.valueOf(value.toUpperCase());
         } catch (IllegalArgumentException e) {
             final String state = buffer.toString(0, buffer.writerIndex(), Charsets.UTF_8);
-            LOG.error("Illegal call type, current buffer state: '{}'", state);
+            LOG.error("Illegal call type, current buffer state: '{}' [0,{})", state, buffer.writerIndex());
             throw e;
         }
     }
@@ -268,7 +263,7 @@ final class LegacyFrameDecoder extends ReplayingDecoder<Part> {
         @Override
         public String toString() {
             return String.format("Header [callType=%s, name=%s, sessionId=%s, contentLength=%s, content=%s]",
-                type, getAliasedName(), getSessionId(), getContentLength(), getContent()
+                getCallType(), getAliasedName(), getSessionId(), getContentLength(), getContent()
             );
         }
         
