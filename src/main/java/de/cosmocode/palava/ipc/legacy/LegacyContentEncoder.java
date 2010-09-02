@@ -56,7 +56,7 @@ final class LegacyContentEncoder extends OneToOneEncoder {
         if (message instanceof Content) {
             
             if (!channel.isWritable()) {
-                LOG.warn("Channel {} is not writable, this might be causing OutOfMemoryErrors");
+                LOG.warn("Channel {} is not writable, this might be causing OutOfMemoryErrors", channel);
             }
             
             final Content content = Content.class.cast(message);
