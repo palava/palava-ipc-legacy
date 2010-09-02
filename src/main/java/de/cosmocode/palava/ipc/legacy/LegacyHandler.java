@@ -22,7 +22,10 @@ import java.util.concurrent.ConcurrentMap;
 
 import javax.annotation.concurrent.ThreadSafe;
 
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelFuture;
+import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandler.Sharable;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelStateEvent;
@@ -33,7 +36,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.gag.annotation.disclaimer.LegacySucks;
 import com.google.inject.Inject;
@@ -123,23 +125,39 @@ final class LegacyHandler extends SimpleChannelHandler {
             final CallType type = call.getHeader().getCallType();
             final Channel channel = event.getChannel();
             
+            if (type == CallType.CLOSE) {
+                channel.write(ChannelBuffers.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+                // nothing to do anymore
+                return;
+            }
+            
+            // to prevent OutOfMemoryError
+            channel.setReadable(false);
+            
+            final Content content;
+            
             if (type == CallType.OPEN) {
-                open(call, channel);
-            } else if (type == CallType.CLOSE) {
-                channel.close();
+                content = open(call, channel);
             } else if (call instanceof DetachedCall) {
                 final DetachedCall detachedCall = DetachedCall.class.cast(call);
                 final HttpRequest request = requests.get(channel);
                 detachedCall.attachTo(request);
-                final Content content = call(detachedCall);
-                channel.write(content);
+                content = call(detachedCall);
             } else {
                 throw new IllegalStateException(String.format("%s is of unknown type", call));
             }
+
+            final ChannelFuture future = channel.write(content);
+            
+            if (LOG.isDebugEnabled()) {
+                future.addListener(ProgressLogger.INSTANCE);
+            }
+            
+            future.addListener(SetReadable.INSTANCE);
         }
     }
     
-    private void open(Call call, Channel channel) {
+    private Content open(Call call, Channel channel) {
         final InternalHttpRequest request = requests.get(channel);
         final Arguments arguments = call.getArguments();
         request.setReferer(arguments.getString(HTTP_REFERER, null));
@@ -156,7 +174,8 @@ final class LegacyHandler extends SimpleChannelHandler {
         }
         
         connectionCreateEvent.eventIpcConnectionCreate(request);
-        channel.write(new JsonContent(Collections.singletonMap("sessionId", request.getSession().getSessionId())));
+        final String sessionId = request.getSession().getSessionId();
+        return new JsonContent(Collections.singletonMap("sessionId", sessionId));
     }
     
     private Content call(final Call call) {
@@ -183,8 +202,11 @@ final class LegacyHandler extends SimpleChannelHandler {
     
     @Override
     public void exceptionCaught(ChannelHandlerContext context, ExceptionEvent event) throws Exception {
-        LOG.error("Uncaught exception", event.getCause());
-        event.getChannel().close();
+        final Channel channel = event.getChannel();
+        final DetachedHttpRequest request = requests.get(channel);
+        final Object remoteAddress = request == null ? channel.getRemoteAddress() : request.getRemoteAddress();
+        LOG.error("Uncaught exception while communicating with " + remoteAddress, event.getCause());
+        channel.close();
     }
     
     /**
