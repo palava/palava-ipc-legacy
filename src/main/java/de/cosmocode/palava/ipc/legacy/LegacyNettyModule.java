@@ -69,7 +69,8 @@ public final class LegacyNettyModule implements Module {
         binder.bind(Server.class).to(LegacyServer.class).in(Singleton.class);
         binder.bind(ServiceManager.class).to(LegacyServer.class).in(Singleton.class);
         
-        // session
+        // request/session
+        binder.bind(HttpRequest.class).annotatedWith(Current.class).to(HttpRequest.class);
         binder.bind(HttpSession.class).annotatedWith(Current.class).to(HttpSession.class);
     }
     
@@ -110,7 +111,6 @@ public final class LegacyNettyModule implements Module {
      * @return the current http request
      */
     @Provides
-    @Current
     HttpRequest provideHttpRequest(@Current Call call) {
         return call.getHttpRequest();
     }
@@ -123,7 +123,7 @@ public final class LegacyNettyModule implements Module {
      * @return a new {@link HttpSession}
      */
     @Provides
-    HttpSession provideHttpSession(IpcSession session) {
+    HttpSession provideHttpSession(@Current IpcSession session) {
         return new LegacyHttpSessionAdapter(session);
     }
 
