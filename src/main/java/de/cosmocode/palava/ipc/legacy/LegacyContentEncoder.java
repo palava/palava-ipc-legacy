@@ -25,6 +25,8 @@ import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandler.Sharable;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
 
@@ -44,12 +46,19 @@ import de.cosmocode.palava.bridge.Content;
 @ThreadSafe
 final class LegacyContentEncoder extends OneToOneEncoder {
 
+    private static final Logger LOG = LoggerFactory.getLogger(LegacyContentEncoder.class);
+    
     private static final byte[] COLON_SLASHES = "://(".getBytes(Charsets.UTF_8);
     private static final byte[] QUESTION_MARK = ")?".getBytes(Charsets.UTF_8);
     
     @Override
     protected Object encode(ChannelHandlerContext context, Channel channel, Object message) throws Exception {
         if (message instanceof Content) {
+            
+            if (!channel.isWritable()) {
+                LOG.warn("Channel {} is not writable, this might be causing OutOfMemoryErrors");
+            }
+            
             final Content content = Content.class.cast(message);
             // cast to int is unsafe, but having more than 2GB is extremely unlikely
             final int contentLength = (int) content.getLength();
