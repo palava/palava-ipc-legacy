@@ -16,13 +16,13 @@
 
 package de.cosmocode.palava.ipc.legacy;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 import javax.annotation.concurrent.ThreadSafe;
 
 import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandler.Sharable;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelStateEvent;
@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.MapMaker;
 import com.google.common.collect.Maps;
 import com.google.gag.annotation.disclaimer.LegacySucks;
 import com.google.inject.Inject;
@@ -77,7 +76,7 @@ final class LegacyHandler extends SimpleChannelHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(LegacyHandler.class);
     
-    private final ConcurrentMap<Channel, InternalHttpRequest> requests = new MapMaker().makeMap();
+    private final ConcurrentMap<Channel, InternalHttpRequest> requests = Maps.newConcurrentMap();
     
     private final IpcConnectionCreateEvent connectionCreateEvent;
     
@@ -97,8 +96,11 @@ final class LegacyHandler extends SimpleChannelHandler {
     public LegacyHandler(
         @Proxy IpcConnectionCreateEvent connectionCreateEvent, 
         @SilentProxy IpcConnectionDestroyEvent connectionDestroyEvent,
-        @Proxy IpcCallCreateEvent callCreateEvent, @SilentProxy IpcCallDestroyEvent callDestroyEvent,
-        IpcSessionProvider sessionProvider, IpcCallScope scope, Executor executor) {
+        @Proxy IpcCallCreateEvent callCreateEvent, 
+        @SilentProxy IpcCallDestroyEvent callDestroyEvent,
+        IpcSessionProvider sessionProvider, 
+        IpcCallScope scope, 
+        Executor executor) {
         this.connectionCreateEvent = Preconditions.checkNotNull(connectionCreateEvent, "CreateEvent");
         this.connectionDestroyEvent = Preconditions.checkNotNull(connectionDestroyEvent, "DestroyEvent");
         this.callCreateEvent = Preconditions.checkNotNull(callCreateEvent, "CreateEvent");
@@ -110,8 +112,7 @@ final class LegacyHandler extends SimpleChannelHandler {
 
     @Override
     public void channelConnected(ChannelHandlerContext context, ChannelStateEvent event) throws Exception {
-        final InternalHttpRequest request = new InternalHttpRequest();
-        requests.put(event.getChannel(), request);
+        requests.put(event.getChannel(), new InternalHttpRequest());
     }
     
     @Override
@@ -125,7 +126,7 @@ final class LegacyHandler extends SimpleChannelHandler {
             if (type == CallType.OPEN) {
                 open(call, channel);
             } else if (type == CallType.CLOSE) {
-                close(channel);
+                channel.close();
             } else if (call instanceof DetachedCall) {
                 final DetachedCall detachedCall = DetachedCall.class.cast(call);
                 final HttpRequest request = requests.get(channel);
@@ -155,7 +156,7 @@ final class LegacyHandler extends SimpleChannelHandler {
         }
         
         connectionCreateEvent.eventIpcConnectionCreate(request);
-        channel.write(new JsonContent(ImmutableMap.of("sessionId", request.getSession().getSessionId())));
+        channel.write(new JsonContent(Collections.singletonMap("sessionId", request.getSession().getSessionId())));
     }
     
     private Content call(final Call call) {
@@ -171,10 +172,6 @@ final class LegacyHandler extends SimpleChannelHandler {
         }
     }
     
-    private void close(final Channel channel) {
-        channel.write(JsonContent.EMPTY).addListener(ChannelFutureListener.CLOSE);
-    }
-    
     @Override
     public void channelClosed(ChannelHandlerContext context, ChannelStateEvent event) throws Exception {
         final Channel channel = event.getChannel();
@@ -186,9 +183,8 @@ final class LegacyHandler extends SimpleChannelHandler {
     
     @Override
     public void exceptionCaught(ChannelHandlerContext context, ExceptionEvent event) throws Exception {
-        final Channel channel = event.getChannel();
         LOG.error("Uncaught exception", event.getCause());
-        channel.close();
+        event.getChannel().close();
     }
     
     /**
