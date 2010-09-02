@@ -19,7 +19,6 @@ package de.cosmocode.palava.ipc.legacy;
 import javax.annotation.concurrent.ThreadSafe;
 
 import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferOutputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandler.Sharable;
@@ -60,18 +59,17 @@ final class LegacyContentEncoder extends OneToOneEncoder {
             }
             
             final Content content = Content.class.cast(message);
-            // cast to int is unsafe, but having more than 2GB is extremely unlikely
-            final int contentLength = (int) content.getLength();
+            final byte[] bytes = content.getBytes();
             
-            final byte[] mimeType = content.getMimeType().toString().getBytes(Charsets.UTF_8);
-            final byte[] length = Integer.toString(contentLength).getBytes(Charsets.UTF_8);
+            final byte[] mimeType = content.getMimeType().getName().getBytes(Charsets.UTF_8);
+            final byte[] length = Integer.toString(bytes.length).getBytes(Charsets.UTF_8);
             
+            // avoid an extra string builder
             final ChannelBuffer buffer = ChannelBuffers.buffer(
                 mimeType.length + 
                 COLON_SLASHES.length + 
                 length.length + 
-                QUESTION_MARK.length + 
-                contentLength
+                QUESTION_MARK.length
             );
             
             buffer.writeBytes(mimeType);
@@ -79,10 +77,10 @@ final class LegacyContentEncoder extends OneToOneEncoder {
             buffer.writeBytes(length);
             buffer.writeBytes(QUESTION_MARK);
             
-            // this effectively copies the content in memory
-            content.write(new ChannelBufferOutputStream(buffer));
-            
-            return buffer;
+            return ChannelBuffers.wrappedBuffer(
+                buffer, 
+                ChannelBuffers.wrappedBuffer(bytes)
+            );
         } else {
             return message;
         }
