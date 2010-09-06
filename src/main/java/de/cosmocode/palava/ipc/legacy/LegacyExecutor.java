@@ -77,11 +77,11 @@ final class LegacyExecutor implements Executor {
             } else {
                 throw new IllegalArgumentException("Unknown class " + raw);
             }
-        /* CHECKSTYLE:OFF */
-        } catch (RuntimeException e) {
-        /* CHECKSTYLE:ON */
-            return ErrorContent.create(e);
         } catch (IpcCommandExecutionException e) {
+            return ErrorContent.create(e);
+        /* CHECKSTYLE:OFF */
+        } catch (Exception e) {
+        /* CHECKSTYLE:ON */
             return ErrorContent.create(e);
         }
     }
