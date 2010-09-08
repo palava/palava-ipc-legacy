@@ -22,7 +22,7 @@ package de.cosmocode.palava.ipc.legacy;
  * @since 1.0
  * @author Willi Schoenborn
  */
-interface CommandCache {
+interface CommandLoader {
 
     /**
      * Loads an object of the named class.

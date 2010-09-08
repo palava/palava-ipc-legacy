@@ -46,29 +46,29 @@ final class LegacyExecutor implements Executor {
 
     private static final Logger LOG = LoggerFactory.getLogger(LegacyExecutor.class);
     
-    private final IpcCommandExecutor ipcCommandExecutor;
+    private final IpcCommandExecutor commandExecutor;
     
     private final JobExecutor jobExecutor;
     
-    private final CommandCache cache;
+    private final CommandLoader loader;
     
     @Inject
-    public LegacyExecutor(IpcCommandExecutor ipcCommandExecutor, JobExecutor jobExecutor, 
-        CommandCache cache) {
-        this.ipcCommandExecutor = Preconditions.checkNotNull(ipcCommandExecutor, "IpcCommandExecutor");
+    public LegacyExecutor(IpcCommandExecutor commandExecutor, JobExecutor jobExecutor, 
+        CommandLoader loader) {
+        this.commandExecutor = Preconditions.checkNotNull(commandExecutor, "CommandExecutor");
         this.jobExecutor = Preconditions.checkNotNull(jobExecutor, "JobExecutor");
-        this.cache = Preconditions.checkNotNull(cache, "Cache");
+        this.loader = Preconditions.checkNotNull(loader, "Loader");
     }
     
     @Override
     public Content execute(Call call) {
         try {
             final String name = call.getHeader().getAliasedName();
-            final Object raw = cache.load(name);
+            final Object raw = loader.load(name);
             
             if (raw instanceof IpcCommand) {
                 LOG.trace("Executing ipc command {}", raw);
-                final Map<String, Object> result = ipcCommandExecutor.execute(raw.getClass().getName(), call);
+                final Map<String, Object> result = commandExecutor.execute(raw.getClass().getName(), call);
                 return new JsonContent(result);
             } else if (raw instanceof Job) {
                 final Job job = Job.class.cast(raw);

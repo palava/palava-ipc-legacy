@@ -23,22 +23,23 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 
 import de.cosmocode.commons.reflect.Reflection;
+import de.cosmocode.palava.bridge.SupersededBy;
 import de.cosmocode.palava.bridge.command.Alias;
 
 /**
- * Legacy implementation of the {@link CommandCache} interface.
+ * Legacy implementation of the {@link CommandLoader} interface.
  *
  * @since 1.0
  * @author Willi Schoenborn
  */
-final class LegacyCommandCache implements CommandCache {
+final class LegacyCommandLoader implements CommandLoader {
 
     private final Injector injector;
     
     private final Set<Alias> aliases;
 
     @Inject
-    public LegacyCommandCache(Injector injector, Set<Alias> aliases) {
+    public LegacyCommandLoader(Injector injector, Set<Alias> aliases) {
         this.injector = Preconditions.checkNotNull(injector, "Injector");
         this.aliases = Preconditions.checkNotNull(aliases, "Aliases");
     }
@@ -48,7 +49,13 @@ final class LegacyCommandCache implements CommandCache {
         Preconditions.checkNotNull(aliasedName, "AliasedName");
         final String realName = toRealName(aliasedName);
         final Class<?> type = forName(realName);
-        return injector.getInstance(type);
+        final SupersededBy supersededBy = type.getAnnotation(SupersededBy.class);
+        
+        if (supersededBy == null) {
+            return injector.getInstance(type);
+        } else {
+            return injector.getInstance(supersededBy.value());
+        }
     }
 
     private String toRealName(String aliasedName) {

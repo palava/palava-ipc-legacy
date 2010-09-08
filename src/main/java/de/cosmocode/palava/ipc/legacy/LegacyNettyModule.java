@@ -58,7 +58,7 @@ public final class LegacyNettyModule implements Module {
         Multibinder.newSetBinder(binder, Alias.class);
         
         // cache used by executors
-        binder.bind(CommandCache.class).to(LegacyCommandCache.class).in(Singleton.class);
+        binder.bind(CommandLoader.class).to(LegacyCommandLoader.class).in(Singleton.class);
         
         // executors
         binder.bind(Executor.class).to(LegacyExecutor.class).in(Singleton.class);
