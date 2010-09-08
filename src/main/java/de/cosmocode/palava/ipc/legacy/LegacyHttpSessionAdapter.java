@@ -42,6 +42,7 @@ import de.cosmocode.rendering.ValueRenderer;
  * @since 1.0
  * @author Willi Schoenborn
  */
+@SuppressWarnings("deprecation")
 final class LegacyHttpSessionAdapter implements HttpSession {
 
     private final IpcSession session;

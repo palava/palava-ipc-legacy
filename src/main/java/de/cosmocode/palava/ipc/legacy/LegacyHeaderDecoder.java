@@ -65,6 +65,7 @@ import de.cosmocode.palava.scope.AbstractScopeContext;
  */
 @Sharable
 @ThreadSafe
+@SuppressWarnings("deprecation")
 final class LegacyHeaderDecoder extends OneToOneDecoder {
 
     private static final Logger LOG = LoggerFactory.getLogger(LegacyHeaderDecoder.class);

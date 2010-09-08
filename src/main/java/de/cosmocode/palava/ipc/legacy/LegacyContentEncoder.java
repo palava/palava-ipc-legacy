@@ -43,6 +43,7 @@ import de.cosmocode.palava.bridge.Content;
  */
 @Sharable
 @ThreadSafe
+@SuppressWarnings("deprecation")
 final class LegacyContentEncoder extends OneToOneEncoder {
 
     private static final Logger LOG = LoggerFactory.getLogger(LegacyContentEncoder.class);

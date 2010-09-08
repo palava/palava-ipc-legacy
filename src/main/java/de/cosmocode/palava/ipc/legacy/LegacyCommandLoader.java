@@ -18,6 +18,9 @@ package de.cosmocode.palava.ipc.legacy;
 
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -32,7 +35,10 @@ import de.cosmocode.palava.bridge.command.Alias;
  * @since 1.0
  * @author Willi Schoenborn
  */
+@SuppressWarnings("deprecation")
 final class LegacyCommandLoader implements CommandLoader {
+    
+    private static final Logger LOG = LoggerFactory.getLogger(LegacyCommandLoader.class);
 
     private final Injector injector;
     
@@ -48,13 +54,15 @@ final class LegacyCommandLoader implements CommandLoader {
     public Object load(String aliasedName) {
         Preconditions.checkNotNull(aliasedName, "AliasedName");
         final String realName = toRealName(aliasedName);
-        final Class<?> type = forName(realName);
-        final SupersededBy supersededBy = type.getAnnotation(SupersededBy.class);
-        
-        if (supersededBy == null) {
-            return injector.getInstance(type);
-        } else {
-            return injector.getInstance(supersededBy.value());
+        final Class<?> type = getTarget(forName(realName));
+        return injector.getInstance(type);
+    }
+    
+    private Class<?> forName(String name) {
+        try {
+            return Reflection.forName(name);
+        } catch (ClassNotFoundException e) {
+            throw new IllegalArgumentException(e);
         }
     }
 
@@ -67,11 +75,14 @@ final class LegacyCommandLoader implements CommandLoader {
         return aliasedName;
     }
     
-    private Class<?> forName(String name) {
-        try {
-            return Reflection.forName(name);
-        } catch (ClassNotFoundException e) {
-            throw new IllegalArgumentException(e);
+    private Class<?> getTarget(Class<?> type) {
+        final SupersededBy supersededBy = type.getAnnotation(SupersededBy.class);
+        if (supersededBy == null) {
+            return type;
+        } else {
+            final Class<?> superseder = supersededBy.value();
+            LOG.debug("Superseding {} with {}", type, superseder);
+            return getTarget(superseder);
         }
     }
     

@@ -29,6 +29,7 @@ import de.cosmocode.palava.ipc.Current;
  * @since 1.0
  * @author Willi Schoenborn
  */
+@SuppressWarnings("deprecation")
 final class LegacyBrowser implements Browser {
 
     private final HttpRequest request;

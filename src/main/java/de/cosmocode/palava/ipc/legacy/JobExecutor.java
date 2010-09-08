@@ -16,8 +16,6 @@
 
 package de.cosmocode.palava.ipc.legacy;
 
-import com.google.gag.annotation.disclaimer.LegacySucks;
-
 import de.cosmocode.palava.bridge.Content;
 import de.cosmocode.palava.bridge.call.Call;
 import de.cosmocode.palava.bridge.command.Job;
@@ -29,7 +27,6 @@ import de.cosmocode.palava.bridge.command.Job;
  * @author Willi Schoenborn
  */
 @SuppressWarnings("deprecation")
-@LegacySucks
 interface JobExecutor {
 
     /**

@@ -28,6 +28,7 @@ import de.cosmocode.palava.ipc.IpcConnection;
  * @since 
  * @author Willi Schoenborn
  */
+@SuppressWarnings("deprecation")
 interface DetachedCall extends Call {
 
     /**

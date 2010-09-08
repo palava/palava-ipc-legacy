@@ -42,6 +42,7 @@ import de.cosmocode.palava.ipc.IpcSession;
  * @since 
  * @author Willi Schoenborn
  */
+@SuppressWarnings("deprecation")
 public final class LegacyNettyModule implements Module {
 
     @Override

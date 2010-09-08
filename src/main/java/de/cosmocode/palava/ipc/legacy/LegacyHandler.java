@@ -37,7 +37,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
-import com.google.gag.annotation.disclaimer.LegacySucks;
 import com.google.inject.Inject;
 
 import de.cosmocode.palava.bridge.Content;
@@ -66,9 +65,9 @@ import de.cosmocode.palava.scope.AbstractScopeContext;
  * @since 1.0
  * @author Willi Schoenborn
  */
-@LegacySucks
 @Sharable
 @ThreadSafe
+@SuppressWarnings("deprecation")
 final class LegacyHandler extends SimpleChannelHandler {
     
     static final String REQUEST_URI = "REQUEST_URI";

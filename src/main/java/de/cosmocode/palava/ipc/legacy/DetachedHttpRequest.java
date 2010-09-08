@@ -26,6 +26,7 @@ import de.cosmocode.palava.bridge.session.HttpSession;
  * @since 
  * @author Willi Schoenborn
  */
+@SuppressWarnings("deprecation")
 public interface DetachedHttpRequest extends HttpRequest {
 
     /**

@@ -40,6 +40,7 @@ import de.cosmocode.palava.bridge.call.CallType;
  * @author Willi Schoenborn
  */
 @NotThreadSafe
+@SuppressWarnings("deprecation")
 final class LegacyFrameDecoder extends ReplayingDecoder<Part> {
 
     private static final Logger LOG = LoggerFactory.getLogger(LegacyFrameDecoder.class);

@@ -28,6 +28,7 @@ import de.cosmocode.palava.bridge.ServiceManager;
  *
  * @author Willi Schoenborn
  */
+@SuppressWarnings("deprecation")
 final class LegacyServer implements Server, ServiceManager {
 
     private final Injector injector;

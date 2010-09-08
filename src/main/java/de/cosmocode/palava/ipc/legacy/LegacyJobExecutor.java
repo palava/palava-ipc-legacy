@@ -17,7 +17,6 @@
 package de.cosmocode.palava.ipc.legacy;
 
 import com.google.common.base.Preconditions;
-import com.google.gag.annotation.disclaimer.LegacySucks;
 import com.google.inject.Inject;
 
 import de.cosmocode.palava.bridge.Content;
@@ -35,7 +34,6 @@ import de.cosmocode.palava.bridge.session.HttpSession;
  * @author Willi Schoenborn
  */
 @SuppressWarnings("deprecation")
-@LegacySucks
 final class LegacyJobExecutor implements JobExecutor {
 
     private final Server server;
