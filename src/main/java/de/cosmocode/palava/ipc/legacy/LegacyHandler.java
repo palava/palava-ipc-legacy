@@ -50,6 +50,8 @@ import de.cosmocode.palava.bridge.scope.Scopes;
 import de.cosmocode.palava.bridge.session.HttpSession;
 import de.cosmocode.palava.core.Registry.Proxy;
 import de.cosmocode.palava.core.Registry.SilentProxy;
+import de.cosmocode.palava.core.lifecycle.Initializable;
+import de.cosmocode.palava.core.lifecycle.LifecycleException;
 import de.cosmocode.palava.ipc.IpcCallCreateEvent;
 import de.cosmocode.palava.ipc.IpcCallDestroyEvent;
 import de.cosmocode.palava.ipc.IpcCallScope;
@@ -69,7 +71,7 @@ import de.cosmocode.palava.scope.AbstractScopeContext;
 @Sharable
 @ThreadSafe
 @SuppressWarnings("deprecation")
-final class LegacyHandler extends SimpleChannelHandler {
+final class LegacyHandler extends SimpleChannelHandler implements Initializable {
     
     static final String REQUEST_URI = "REQUEST_URI";
     static final String HTTP_REFERER = "HTTP_REFERER";
@@ -121,6 +123,11 @@ final class LegacyHandler extends SimpleChannelHandler {
     @Inject(optional = true)
     void setThrottle(@Named(LegacyNettyConfig.THROTTLE) boolean throttle) {
         this.throttle = throttle;
+    }
+    
+    @Override
+    public void initialize() throws LifecycleException {
+        LOG.info("Throttling is set to {}", throttle);
     }
     
     @Override
