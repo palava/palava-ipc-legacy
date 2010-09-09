@@ -16,6 +16,9 @@
 
 package de.cosmocode.palava.ipc.legacy;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 
@@ -35,6 +38,8 @@ import de.cosmocode.palava.bridge.session.HttpSession;
  */
 @SuppressWarnings("deprecation")
 final class LegacyJobExecutor implements JobExecutor {
+    
+    private static final Logger LOG = LoggerFactory.getLogger(LegacyJobExecutor.class);
 
     private final Server server;
     
@@ -55,6 +60,7 @@ final class LegacyJobExecutor implements JobExecutor {
         /* CHECKSTYLE:OFF */
         } catch (Exception e) {
         /* CHECKSTYLE:ON */
+            LOG.error("An undeclared exception was thrown while executing " + job, e);
             return ErrorContent.create(e);
         }
     }
