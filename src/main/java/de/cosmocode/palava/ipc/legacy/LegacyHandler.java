@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 import de.cosmocode.palava.bridge.Content;
 import de.cosmocode.palava.bridge.call.Arguments;
@@ -93,6 +94,12 @@ final class LegacyHandler extends SimpleChannelHandler {
     
     private final Executor executor;
     
+    /**
+     * When set to true {@link Channel}s will be set un-readable during
+     * processing to prevent {@link OutOfMemoryError}s. 
+     */
+    private boolean throttle;
+    
     @Inject
     public LegacyHandler(
         @Proxy IpcConnectionCreateEvent connectionCreateEvent, 
@@ -111,6 +118,11 @@ final class LegacyHandler extends SimpleChannelHandler {
         this.executor = Preconditions.checkNotNull(executor, "Executor");
     }
 
+    @Inject(optional = true)
+    void setThrottle(@Named(LegacyNettyConfig.THROTTLE) boolean throttle) {
+        this.throttle = throttle;
+    }
+    
     @Override
     public void channelConnected(ChannelHandlerContext context, ChannelStateEvent event) throws Exception {
         requests.put(event.getChannel(), new InternalHttpRequest());
@@ -130,8 +142,9 @@ final class LegacyHandler extends SimpleChannelHandler {
                 return;
             }
             
-            // to prevent OutOfMemoryError
-            channel.setReadable(false);
+            if (throttle) {
+                channel.setReadable(false);
+            }
             
             final Content content;
             
@@ -152,7 +165,9 @@ final class LegacyHandler extends SimpleChannelHandler {
                 future.addListener(ProgressLogger.INSTANCE);
             }
             
-            future.addListener(SetReadable.INSTANCE);
+            if (throttle) {
+                future.addListener(SetReadable.INSTANCE);
+            }
         }
     }
     
