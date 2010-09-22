@@ -16,7 +16,6 @@
 
 package de.cosmocode.palava.ipc.legacy;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;
@@ -129,7 +128,7 @@ final class LegacyHeaderDecoder extends OneToOneDecoder {
         }
         
         @Override
-        public void discard() throws ConnectionLostException, IOException {
+        public void discard() {
             // nothing to do
         }
         
