@@ -78,10 +78,7 @@ final class LegacyContentEncoder extends OneToOneEncoder {
             buffer.writeBytes(length);
             buffer.writeBytes(QUESTION_MARK);
             
-            return ChannelBuffers.wrappedBuffer(
-                buffer, 
-                ChannelBuffers.wrappedBuffer(bytes)
-            );
+            return ChannelBuffers.wrappedBuffer(buffer, ChannelBuffers.wrappedBuffer(bytes));
         } else {
             return message;
         }
