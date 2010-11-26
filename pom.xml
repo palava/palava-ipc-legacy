@@ -10,7 +10,7 @@
   <name>Palava IPC Legacy</name>
   <version>1.4-SNAPSHOT</version>
   <scm>
-    <developerConnection>scm:svn:https://palava.svn.cosmocode.de/palava-ipc-legacy/trunk</developerConnection>
+    <developerConnection>scm:git:git@github.com:palava/${project.artifactId}.git</developerConnection>
   </scm>
   <repositories>
     <repository>
