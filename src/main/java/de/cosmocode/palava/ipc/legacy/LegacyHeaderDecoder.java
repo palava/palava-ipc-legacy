@@ -243,8 +243,6 @@ final class LegacyHeaderDecoder extends OneToOneDecoder {
      */
     private static final class InternalJsonCall extends AbstractCall implements JsonCall {
         
-        private static final Logger LOG = LoggerFactory.getLogger(InternalJsonCall.class);
-        
         private final Header header;
 
         private final String text;
