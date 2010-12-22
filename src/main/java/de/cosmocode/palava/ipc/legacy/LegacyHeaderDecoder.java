@@ -168,7 +168,7 @@ final class LegacyHeaderDecoder extends OneToOneDecoder {
      * @since 1.0
      * @author Willi Schoenborn
      */
-    private static final class OpenCall extends AbstractCall implements Call {
+    private static final class OpenCall extends AbstractCall {
         
         private final Header header;
         
@@ -395,7 +395,7 @@ final class LegacyHeaderDecoder extends OneToOneDecoder {
      * @since 1.0
      * @author Willi Schoenborn
      */
-    private static final class CloseCall extends AbstractCall implements Call {
+    private static final class CloseCall extends AbstractCall {
         
         private final Header header;
         
