@@ -19,18 +19,6 @@
       <url>http://mvn.cosmocode.de/</url>
     </repository>
   </repositories>
-  <distributionManagement>
-    <repository>
-      <id>cosmocode-private-releases</id>
-      <name>CosmoCode private releases</name>
-      <url>http://mvn.cosmo/repository/internal</url>
-    </repository>
-    <snapshotRepository>
-      <id>cosmocode-private-snapshots</id>
-      <name>CosmoCode private snapshots</name>
-      <url>http://mvn.cosmo/repository/snapshots</url>
-    </snapshotRepository>
-  </distributionManagement>
   <dependencies>
     <dependency>
       <groupId>org.slf4j</groupId>
