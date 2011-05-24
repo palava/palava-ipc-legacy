@@ -18,11 +18,11 @@ package de.cosmocode.palava.ipc.legacy;
 
 import java.text.Collator;
 import java.text.NumberFormat;
+import java.util.Collection;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.StringUtils;
@@ -34,7 +34,6 @@ import de.cosmocode.palava.ipc.IpcSession;
 import de.cosmocode.rendering.Renderer;
 import de.cosmocode.rendering.RenderingException;
 import de.cosmocode.rendering.RenderingLevel;
-import de.cosmocode.rendering.ValueRenderer;
 
 /**
  * Adapter for {@link IpcSession} to {@link HttpSession}.
@@ -155,33 +154,92 @@ final class LegacyHttpSessionAdapter implements HttpSession {
     }
 
     @Override
-    public <K> boolean contains(K key) {
-        return session.contains(key);
+    public Object putIfAbsent(Object key, Object value) {
+        return session.putIfAbsent(key, value);
     }
 
     @Override
-    public <K, V> V get(K key) {
-        return session.<K, V>get(key);
+    public Object get(Object key) {
+        return session.get(key);
     }
 
     @Override
-    public Iterator<Entry<Object, Object>> iterator() {
-        return session.iterator();
+    public Object remove(Object key) {
+        return session.remove(key);
     }
 
     @Override
-    public <K, V> void putAll(Map<? extends K, ? extends V> map) {
-        session.putAll(map);
+    public boolean remove(Object key, Object value) {
+        return session.remove(key, value);
     }
 
     @Override
-    public <K, V> V remove(K key) {
-        return session.<K, V>remove(key);
+    public boolean replace(Object key, Object oldValue, Object newValue) {
+        return session.replace(key, oldValue, newValue);
     }
 
     @Override
-    public <K, V> void set(K key, V value) {
-        session.set(key, value);
+    public Object replace(Object key, Object value) {
+        return session.replace(key, value);
+    }
+
+    @Override
+    public int size() {
+        return session.size();
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return session.isEmpty();
+    }
+
+    @Override
+    public boolean containsKey(Object key) {
+        return session.containsKey(key);
+    }
+
+    @Override
+    public boolean containsValue(Object value) {
+        return session.containsValue(value);
+    }
+
+    @Override
+    public Object put(Object key, Object value) {
+        return session.put(key, value);
+    }
+
+    @Override
+    public void putAll(Map<? extends Object, ? extends Object> m) {
+        session.putAll(m);
+    }
+
+    @Override
+    public Set<Object> keySet() {
+        return session.keySet();
+    }
+
+    @Override
+    public Collection<Object> values() {
+        return session.values();
+    }
+
+    @Override
+    public Set<java.util.Map.Entry<Object, Object>> entrySet() {
+        return session.entrySet();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return session.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+        return session.hashCode();
+    }
+    
+    public IpcSession getSession() {
+        return session;
     }
 
     @Override
@@ -189,31 +247,7 @@ final class LegacyHttpSessionAdapter implements HttpSession {
         renderer.
             key("id").value(getSessionId()).
             key("accesstime").value(lastAccessTime()).
-            key("data").value(session, SessionValueRenderer.INSTANCE);
-    }
-    
-    /**
-     * Simple {@link ValueRenderer}  for {@link IpcSession}.
-     *
-     * @author Willi Schoenborn
-     */
-    private enum SessionValueRenderer implements ValueRenderer<IpcSession> {
-        
-        INSTANCE;
-        
-        @Override
-        public void render(IpcSession value, Renderer renderer) throws RenderingException {
-            renderer.map();
-            for (Entry<Object, Object> entry : value) {
-                renderer.key(entry.getKey()).value(entry.getValue());
-            }
-            renderer.endMap();
-        }
-        
-    }
-    
-    public IpcSession getSession() {
-        return session;
+            key("data").value(getSession());
     }
 
 }

@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
 
 import de.cosmocode.collections.utility.AbstractUtilityMap;
 import de.cosmocode.collections.utility.UtilityMap;
@@ -54,7 +53,7 @@ import de.cosmocode.palava.bridge.call.TextCall;
 import de.cosmocode.palava.bridge.request.HttpRequest;
 import de.cosmocode.palava.ipc.IpcCall;
 import de.cosmocode.palava.ipc.IpcConnection;
-import de.cosmocode.palava.scope.AbstractScopeContext;
+import de.cosmocode.palava.scope.ConcurrentMapScopeContext;
 
 /**
  * A decoder which decodes {@link Header}s into {@link IpcCall}s.
@@ -108,23 +107,13 @@ final class LegacyHeaderDecoder extends OneToOneDecoder {
      * @since 1.0
      * @author Willi Schoenborn
      */
-    private abstract static class AbstractCall extends AbstractScopeContext implements DetachedCall {
-        
-        private Map<Object, Object> context;
+    private abstract static class AbstractCall extends ConcurrentMapScopeContext implements DetachedCall {
         
         private HttpRequest request;
         
         @Override
         public void attachTo(HttpRequest r) {
             this.request = Preconditions.checkNotNull(r, "Request");
-        }
-        
-        @Override
-        protected Map<Object, Object> context() {
-            if (context == null) {
-                context = Maps.newHashMap();
-            }
-            return context;
         }
         
         @Override

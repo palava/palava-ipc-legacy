@@ -17,7 +17,6 @@
 package de.cosmocode.palava.ipc.legacy;
 
 import java.util.Collections;
-import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 import javax.annotation.concurrent.ThreadSafe;
@@ -60,7 +59,7 @@ import de.cosmocode.palava.ipc.IpcConnectionDestroyEvent;
 import de.cosmocode.palava.ipc.IpcSession;
 import de.cosmocode.palava.ipc.IpcSessionNotAttachedException;
 import de.cosmocode.palava.ipc.IpcSessionProvider;
-import de.cosmocode.palava.scope.AbstractScopeContext;
+import de.cosmocode.palava.scope.ConcurrentMapScopeContext;
 
 /**
  * Handler which process the legacy palava php protocol.
@@ -236,10 +235,9 @@ final class LegacyHandler extends SimpleChannelHandler implements Initializable 
      * @since 1.0
      * @author Willi Schoenborn
      */
-    private static final class InternalHttpRequest extends AbstractScopeContext implements DetachedHttpRequest {
+    private static final class InternalHttpRequest extends ConcurrentMapScopeContext 
+        implements DetachedHttpRequest {
 
-        private Map<Object, Object> context;
-        
         private HttpSession session;
         
         private String referer;
@@ -250,14 +248,6 @@ final class LegacyHandler extends SimpleChannelHandler implements Initializable 
         
         private String userAgent;
         
-        @Override
-        protected Map<Object, Object> context() {
-            if (context == null) {
-                context = Maps.newHashMap();
-            }
-            return context;
-        }
-
         @Override
         public HttpSession getHttpSession() {
             if (session == null) {
