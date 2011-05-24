@@ -8,7 +8,7 @@
   <groupId>de.cosmocode.palava</groupId>
   <artifactId>palava-ipc-legacy</artifactId>
   <name>Palava IPC Legacy</name>
-  <version>1.3.3-SNAPSHOT</version>
+  <version>1.3.2-SNAPSHOT</version>
   <scm>
     <developerConnection>scm:git:git@github.com:palava/${project.artifactId}.git</developerConnection>
   </scm>
@@ -19,6 +19,18 @@
       <url>http://mvn.cosmocode.de/</url>
     </repository>
   </repositories>
+  <distributionManagement>
+    <repository>
+      <id>cosmocode-private-releases</id>
+      <name>CosmoCode private releases</name>
+      <url>http://mvn.cosmo/repository/internal</url>
+    </repository>
+    <snapshotRepository>
+      <id>cosmocode-private-snapshots</id>
+      <name>CosmoCode private snapshots</name>
+      <url>http://mvn.cosmo/repository/snapshots</url>
+    </snapshotRepository>
+  </distributionManagement>
   <dependencies>
     <dependency>
       <groupId>org.slf4j</groupId>
