@@ -22,10 +22,8 @@ import java.util.concurrent.ConcurrentMap;
 
 import javax.annotation.concurrent.ThreadSafe;
 
-import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandler.Sharable;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelStateEvent;
@@ -137,8 +135,7 @@ final class LegacyHandler extends SimpleChannelHandler {
             final Channel channel = event.getChannel();
             
             if (type == CallType.CLOSE) {
-                channel.write(ChannelBuffers.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
-                // nothing to do anymore
+                channel.close();
                 return;
             }
             
@@ -159,14 +156,16 @@ final class LegacyHandler extends SimpleChannelHandler {
                 throw new IllegalStateException(String.format("%s is of unknown type", call));
             }
 
-            final ChannelFuture future = channel.write(content);
-            
-            if (LOG.isDebugEnabled()) {
-                future.addListener(ProgressLogger.INSTANCE);
-            }
-            
-            if (throttle) {
-                future.addListener(SetReadable.INSTANCE);
+            if (channel.isConnected()) {
+                final ChannelFuture future = channel.write(content);
+                
+                if (LOG.isDebugEnabled()) {
+                    future.addListener(ProgressLogger.INSTANCE);
+                }
+                
+                if (throttle) {
+                    future.addListener(SetReadable.INSTANCE);
+                }
             }
         }
     }
